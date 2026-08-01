@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass Live</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:18px;max-width:720px;margin:auto}
+h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margin:10px 0}
+.slots{display:flex;gap:5px;margin:8px 0}
+.s{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;background:#333}
+.s1{background:#1d3a52}.s0{background:#20362a}.s255{background:#3a2020;color:#c66}
+.meta{color:#999;font-size:12px}
+</style></head><body>
+<h1>Bin Bypass Live — fleet (anywhere)</h1>
+<div class="card meta">Reads the fleet database directly. Configure SUPABASE_URL and SUPABASE_ANON_KEY below, host this file in a public Supabase Storage bucket, and open it from any device.</div>
+<div id="root">loading…</div>
+<script>
+const SUPABASE_URL = "https://kyjrqpibtncvhxwcaovx.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // publishable, safe in browser (RLS read-only)
+
+async function sb(path){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
+  return r.json();
+}
+async function tick(){
+  try{
+    const units = await sb("units?select=*&order=last_seen.desc");
+    let h="";
+    for(const u of units){
+      const pk = await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
+      const slots = pk.length?JSON.parse(pk[0].slots):[];
+      h+=`<div class="card"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · last seen ${u.last_seen} · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}</span><div class="slots">`;
+      slots.forEach(v=>{h+=`<div class="s s${v}">${v===255?"✕":v}</div>`});
+      h+="</div></div>";
+    }
+    document.getElementById("root").innerHTML=h||'<div class="card">no units yet</div>';
+  }catch(e){document.getElementById("root").innerHTML='<div class="card">config needed: '+e+'</div>'}
+}
+setInterval(tick,5000);tick();
+</script></body></html>
