@@ -26,7 +26,8 @@ async function tick(){
     for(const u of units){
       const pk = await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
       const slots = pk.length?JSON.parse(pk[0].slots):[];
-      h+=`<div class="card"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · last seen ${u.last_seen} · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}</span><div class="slots">`;
+      const loc = u.lat!=null?` · <a style="color:#7ab7ff" href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank">📍 ${Number(u.lat).toFixed(4)},${Number(u.lon).toFixed(4)}</a>`:"";
+      h+=`<div class="card"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · last seen ${u.last_seen} · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span><div class="slots">`;
       slots.forEach(v=>{h+=`<div class="s s${v}">${v===255?"✕":v}</div>`});
       h+="</div></div>";
     }
