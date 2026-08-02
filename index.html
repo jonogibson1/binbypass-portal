@@ -24,7 +24,7 @@ h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margi
 .hint{font-size:11px;color:#666}
 </style></head><body>
 <h1>Bin Bypass Live — fleet (anywhere)</h1>
-<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a></div>
+<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a><br><span id="updated" class="hint">checking data freshness…</span></div>
 <div id="map"></div>
 <div id="root">loading…</div>
 <script>
@@ -34,6 +34,14 @@ const SUPABASE_ANON_KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // p
 async function sb(path){
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
   return r.json();
+}
+
+function ago(iso){
+  const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+  if(s < 60) return Math.round(s) + "s ago";
+  if(s < 3600) return Math.round(s/60) + " min ago";
+  if(s < 86400) return (s/3600).toFixed(1) + " h ago";
+  return (s/86400).toFixed(1) + " days ago";
 }
 
 // ---- unit stats: derived client-side from slot_events (fine at pilot scale) ----
@@ -99,7 +107,7 @@ function plot(located){
         const s = await unitStats(u.unit_id);
         m.setPopupContent(
           `<b>Unit ${u.unit_id}</b> — ${u.occ} container${u.occ===1?"":"s"} now<br>`+
-          `<span class="meta">last seen ${u.last_seen} · ±${u.acc_m??"?"} m</span><br>`+
+          `<span class="meta">updated ${ago(u.last_seen)} · ±${u.acc_m??"?"} m</span><br>`+
           `In past 7 days: <b>${s.deposits7}</b><br>`+
           `Avg dwell: <b>${s.dwell}</b><br>`+
           `Total moved: <b>${s.moved}</b>`);
@@ -117,6 +125,14 @@ function plot(located){
 async function tick(){
   try{
     const units = await sb("units?select=*&order=last_seen.desc");
+    const latest = await sb("packets?select=received_at&order=id.desc&limit=1");
+    if(latest.length){
+      const t = new Date(latest[0].received_at);
+      document.getElementById("updated").textContent =
+        `Data last updated ${ago(latest[0].received_at)} (${t.toLocaleString()}) · page checked ${new Date().toLocaleTimeString()}`;
+    } else {
+      document.getElementById("updated").textContent = "No data yet";
+    }
     const located = [];
     let h = "";
     for(const u of units){
@@ -125,7 +141,7 @@ async function tick(){
       const occ = slots.filter(v=>v===1).length;
       if(u.lat!=null) located.push({...u, occ});
       const loc = u.lat!=null?` · <a style="color:#7ab7ff" href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank" onclick="event.stopPropagation()">📍 ${Number(u.lat).toFixed(4)},${Number(u.lon).toFixed(4)}</a>`:"";
-      h+=`<div class="card unitcard" onclick="toggleStats('${u.unit_id}')"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · ${occ}/6 in · last seen ${u.last_seen} · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span> <span class="hint">tap for stats</span><div class="slots">`;
+      h+=`<div class="card unitcard" onclick="toggleStats('${u.unit_id}')"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · ${occ}/6 in · updated <span title="${u.last_seen}">${ago(u.last_seen)}</span> · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span> <span class="hint">tap for stats</span><div class="slots">`;
       slots.forEach(v=>{h+=`<div class="s s${v}">${v===255?"✕":v}</div>`});
       h+=`</div><div class="stats" id="st-${u.unit_id}"></div></div>`;
     }
