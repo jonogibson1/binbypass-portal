@@ -3,17 +3,28 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-#map{height:340px;border-radius:12px;margin:10px 0;background:#222}
-.leaflet-container{font:inherit}
 body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:18px;max-width:720px;margin:auto}
 h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margin:10px 0}
 .slots{display:flex;gap:5px;margin:8px 0}
 .s{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;background:#333}
 .s1{background:#1d3a52}.s0{background:#20362a}.s255{background:#3a2020;color:#c66}
 .meta{color:#999;font-size:12px}
+#map{height:340px;border-radius:12px;margin:10px 0;background:#222}
+.leaflet-container{font:inherit}
+.pin{width:30px;height:30px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;
+     font:700 14px -apple-system,sans-serif;color:#0c1f13;box-shadow:0 1px 5px rgba(0,0,0,.6)}
+.pin.fresh{background:#4ade80}.pin.stale{background:#e0b040}
+.leaflet-popup-content-wrapper{background:#232329;color:#eee;border-radius:10px}
+.leaflet-popup-tip{background:#232329}
+.stats{display:none;margin-top:10px;border-top:1px solid #333;padding-top:10px}
+.stats.open{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat b{display:block;font-size:19px;color:#4ade80}
+.stat span{font-size:11px;color:#999;line-height:1.3;display:block}
+.unitcard{cursor:pointer}
+.hint{font-size:11px;color:#666}
 </style></head><body>
 <h1>Bin Bypass Live — fleet (anywhere)</h1>
-<div class="card meta">Live fleet view — reads the cloud database (Supabase, Sydney) directly. Refreshes every 5&nbsp;s. Data path: unit → HiveMQ Cloud MQTT → ingest → Postgres → here. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a></div>
+<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a></div>
 <div id="map"></div>
 <div id="root">loading…</div>
 <script>
@@ -25,20 +36,75 @@ async function sb(path){
   return r.json();
 }
 
+// ---- unit stats: derived client-side from slot_events (fine at pilot scale) ----
+const statCache = {};
+async function unitStats(id){
+  const c = statCache[id];
+  if(c && Date.now()-c.t < 60000) return c.v;
+  const ev = await sb(`slot_events?unit_id=eq.${id}&select=slot,state,changed_at&order=changed_at.asc&limit=1000`);
+  const weekAgo = Date.now() - 7*24*3600*1000;
+  let deposits7 = 0, moved = 0, dwellSum = 0, dwellN = 0;
+  const openSince = {};                       // slot -> deposit time awaiting collection
+  for(const e of ev){
+    const t = Date.parse(e.changed_at);
+    if(e.state === 1){
+      openSince[e.slot] = t;
+      if(t >= weekAgo) deposits7++;
+    } else if(e.state === 0 && openSince[e.slot] != null){
+      moved++;
+      dwellSum += t - openSince[e.slot];
+      dwellN++;
+      delete openSince[e.slot];
+    } else if(e.state === 255){
+      delete openSince[e.slot];               // fault: don't count toward dwell
+    }
+  }
+  const dwellH = dwellN ? dwellSum/dwellN/3600000 : null;
+  const dwell = dwellH == null ? "—" : dwellH < 1 ? Math.round(dwellH*60)+" min" : dwellH.toFixed(1)+" h";
+  const v = {deposits7, moved, dwell, partial: ev.length === 1000};
+  statCache[id] = {t: Date.now(), v};
+  return v;
+}
+function statsHtml(s){
+  return `<div class="stat"><b>${s.deposits7}</b><span>containers in, past 7 days</span></div>`+
+         `<div class="stat"><b>${s.dwell}</b><span>average dwell before collection</span></div>`+
+         `<div class="stat"><b>${s.moved}</b><span>containers moved, all time${s.partial?" (last 1000 events)":""}</span></div>`;
+}
+async function toggleStats(id){
+  const el = document.getElementById("st-"+CSS.escape(id));
+  if(!el) return;
+  if(el.classList.contains("open")){ el.classList.remove("open"); return; }
+  el.innerHTML = '<div class="stat"><span>loading…</span></div>';
+  el.classList.add("open");
+  el.innerHTML = statsHtml(await unitStats(id));
+}
+
+// ---- map ----
 const map = L.map("map",{scrollWheelZoom:false}).setView([-27.4,153.0],10);
 L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
   {attribution:"Imagery: Esri World Imagery",maxZoom:19}).addTo(map);
 const markers = {};
 let fitted = false;
-function plot(units){
-  const located = units.filter(u=>u.lat!=null);
+function plot(located){
   for(const u of located){
     const fresh = (Date.now()-Date.parse(u.last_seen)) < 30*60*1000;
-    const style = {radius:9,color:"#fff",weight:2,fillColor:fresh?"#4ade80":"#e0b040",fillOpacity:0.9};
-    if(markers[u.unit_id]){ markers[u.unit_id].setLatLng([u.lat,u.lon]).setStyle(style); }
+    const icon = L.divIcon({html:`<div class="pin ${fresh?"fresh":"stale"}">${u.occ}</div>`,
+                            className:"", iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-14]});
+    if(markers[u.unit_id]){ markers[u.unit_id].setLatLng([u.lat,u.lon]).setIcon(icon); }
     else {
-      markers[u.unit_id] = L.circleMarker([u.lat,u.lon],style).addTo(map)
-        .bindPopup(()=>`<b>Unit ${u.unit_id}</b><br>last seen ${u.last_seen}<br>±${u.acc_m??"?"} m`);
+      const m = L.marker([u.lat,u.lon],{icon}).addTo(map);
+      m.bindPopup("loading…",{minWidth:230});
+      m.on("click", async ()=>{
+        m.setPopupContent(`<b>Unit ${u.unit_id}</b><br><span class="meta">fetching…</span>`);
+        const s = await unitStats(u.unit_id);
+        m.setPopupContent(
+          `<b>Unit ${u.unit_id}</b> — ${u.occ} container${u.occ===1?"":"s"} now<br>`+
+          `<span class="meta">last seen ${u.last_seen} · ±${u.acc_m??"?"} m</span><br>`+
+          `In past 7 days: <b>${s.deposits7}</b><br>`+
+          `Avg dwell: <b>${s.dwell}</b><br>`+
+          `Total moved: <b>${s.moved}</b>`);
+      });
+      markers[u.unit_id] = m;
     }
   }
   if(!fitted && located.length){
@@ -46,20 +112,31 @@ function plot(units){
     fitted = true;
   }
 }
+
+// ---- fleet cards ----
 async function tick(){
   try{
     const units = await sb("units?select=*&order=last_seen.desc");
-    plot(units);
-    let h="";
+    const located = [];
+    let h = "";
     for(const u of units){
       const pk = await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
       const slots = pk.length?JSON.parse(pk[0].slots):[];
-      const loc = u.lat!=null?` · <a style="color:#7ab7ff" href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank">📍 ${Number(u.lat).toFixed(4)},${Number(u.lon).toFixed(4)}</a>`:"";
-      h+=`<div class="card"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · last seen ${u.last_seen} · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span><div class="slots">`;
+      const occ = slots.filter(v=>v===1).length;
+      if(u.lat!=null) located.push({...u, occ});
+      const loc = u.lat!=null?` · <a style="color:#7ab7ff" href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank" onclick="event.stopPropagation()">📍 ${Number(u.lat).toFixed(4)},${Number(u.lon).toFixed(4)}</a>`:"";
+      h+=`<div class="card unitcard" onclick="toggleStats('${u.unit_id}')"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · ${occ}/6 in · last seen ${u.last_seen} · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span> <span class="hint">tap for stats</span><div class="slots">`;
       slots.forEach(v=>{h+=`<div class="s s${v}">${v===255?"✕":v}</div>`});
-      h+="</div></div>";
+      h+=`</div><div class="stats" id="st-${u.unit_id}"></div></div>`;
     }
-    document.getElementById("root").innerHTML=h||'<div class="card">no units yet</div>';
+    plot(located);
+    // rebuild cards but keep any open stats panels open
+    const open = [...document.querySelectorAll(".stats.open")].map(e=>e.id);
+    document.getElementById("root").innerHTML = h || '<div class="card">no units yet</div>';
+    for(const id of open){
+      const el = document.getElementById(id);
+      if(el){ el.classList.add("open"); el.innerHTML = statsHtml(await unitStats(id.slice(3))); }
+    }
   }catch(e){document.getElementById("root").innerHTML='<div class="card">config needed: '+e+'</div>'}
 }
 setInterval(tick,5000);tick();
