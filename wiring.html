@@ -1,0 +1,147 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass — MVP wiring</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:980px;margin:auto}
+h1{font-size:20px}h2{font-size:16px;margin:30px 0 6px}
+.cap{color:#999;font-size:13px;line-height:1.6;margin:8px 0 20px}
+svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px}
+.rule{background:#1c2b22;border:1px solid #166534;border-radius:12px;padding:10px 14px;font-size:13px;color:#cde;margin:10px 0}
+.warn{background:#2b1c1c;border-color:#7f1d1d;color:#edc}
+kbd{background:#333;border-radius:4px;padding:1px 6px;font-size:12px}
+</style></head><body>
+<h1>Main unit (mark 3) — wiring</h1>
+<div class="rule">Golden rule, unchanged: <b>read the silkscreen labels, never count pin positions.</b> PSU off before touching anything. A steady 2 A means STOP.</div>
+
+<h2>1 · The tester — today's job (modem dial-out)</h2>
+<svg viewBox="0 0 960 470" font-family="-apple-system,sans-serif">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
+
+<!-- Mac -->
+<rect x="20" y="40" width="150" height="90" rx="10" fill="#26262e" stroke="#555"/>
+<text x="95" y="78" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">MacBook</text>
+<text x="95" y="100" fill="#999" text-anchor="middle" font-size="11">watches transcript</text>
+<line x1="170" y1="85" x2="255" y2="85" stroke="#888" stroke-width="3" marker-end="url(#a)"/>
+<text x="212" y="76" fill="#aaa" text-anchor="middle" font-size="11">USB-C (good cable)</text>
+
+<!-- RAK -->
+<rect x="255" y="30" width="270" height="220" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
+<text x="390" y="58" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">Unit 3 — RAK19001 + RAK13002</text>
+<text x="390" y="76" fill="#7ab7ff" text-anchor="middle" font-size="11">firmware: mqttprober.uf2 (already flashed)</text>
+<!-- pins on right edge of 13002 -->
+<rect x="470" y="100" width="55" height="26" rx="4" fill="#333"/><text x="497" y="118" fill="#4ade80" text-anchor="middle" font-size="13" font-weight="700">TXD0</text>
+<rect x="470" y="140" width="55" height="26" rx="4" fill="#333"/><text x="497" y="158" fill="#fbbf24" text-anchor="middle" font-size="13" font-weight="700">RXD0</text>
+<rect x="470" y="180" width="55" height="26" rx="4" fill="#333"/><text x="497" y="198" fill="#ccc" text-anchor="middle" font-size="13" font-weight="700">GND</text>
+<rect x="470" y="220" width="55" height="26" rx="4" fill="#333"/><text x="497" y="238" fill="#f87171" text-anchor="middle" font-size="13" font-weight="700">3V3</text>
+<text x="390" y="120" fill="#888" text-anchor="end" font-size="11">RAK13002 header —</text>
+<text x="390" y="134" fill="#888" text-anchor="end" font-size="11">read its silkscreen</text>
+
+<!-- Waveshare -->
+<rect x="640" y="30" width="290" height="270" rx="12" fill="#2b2436" stroke="#a78bfa"/>
+<text x="785" y="58" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">Waveshare Pico-SIM7080G</text>
+<text x="785" y="76" fill="#c4b5fd" text-anchor="middle" font-size="11">BOARD 1 · Hologram SIM in · antenna fitted</text>
+<rect x="640" y="100" width="55" height="26" rx="4" fill="#333" transform="translate(5,0)"/><text x="672" y="118" fill="#4ade80" text-anchor="middle" font-size="13" font-weight="700">RXD</text>
+<rect x="645" y="140" width="55" height="26" rx="4" fill="#333"/><text x="672" y="158" fill="#fbbf24" text-anchor="middle" font-size="13" font-weight="700">TXD</text>
+<rect x="645" y="180" width="55" height="26" rx="4" fill="#333"/><text x="672" y="198" fill="#ccc" text-anchor="middle" font-size="13" font-weight="700">GND</text>
+<rect x="645" y="220" width="55" height="26" rx="4" fill="#333"/><text x="672" y="238" fill="#f87171" text-anchor="middle" font-size="13" font-weight="700">PWR</text>
+<text x="800" y="245" fill="#c4b5fd" font-size="11" text-anchor="middle">slide switch = ON</text>
+<text x="800" y="262" fill="#c4b5fd" font-size="11" text-anchor="middle">(gates the battery rail)</text>
+
+<!-- wires -->
+<path d="M525 113 L645 113" stroke="#4ade80" stroke-width="3.5" fill="none"/>
+<text x="585" y="106" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">green</text>
+<path d="M525 153 L645 153" stroke="#fbbf24" stroke-width="3.5" fill="none"/>
+<text x="585" y="146" fill="#fbbf24" text-anchor="middle" font-size="12" font-weight="700">orange</text>
+<path d="M525 193 L645 193" stroke="#ccc" stroke-width="3.5" fill="none"/>
+<text x="585" y="186" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">black</text>
+<!-- wake tap dashed -->
+<path d="M525 233 L645 233" stroke="#f87171" stroke-width="3" stroke-dasharray="7 6" fill="none"/>
+<text x="585" y="226" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">wake tap only — 2 s, then remove</text>
+
+<!-- battery -->
+<rect x="640" y="330" width="290" height="110" rx="12" fill="#20362a" stroke="#4ade80"/>
+<text x="785" y="358" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">18650 protected cell (new) in holder</text>
+<text x="785" y="378" fill="#9c9" text-anchor="middle" font-size="12">holder red lead → battery-plug RED</text>
+<text x="785" y="396" fill="#9c9" text-anchor="middle" font-size="12">holder black lead → battery-plug BLACK</text>
+<text x="785" y="420" fill="#888" text-anchor="middle" font-size="11">(PSU-as-battery 4.00 V / 3 A still works as fallback)</text>
+<path d="M785 330 L785 300" stroke="#4ade80" stroke-width="3.5" marker-end="url(#a)"/>
+
+<!-- meter note -->
+<rect x="20" y="330" width="560" height="110" rx="12" fill="#26262e" stroke="#555"/>
+<text x="40" y="360" fill="#eee" font-size="13" font-weight="700">Meter signatures (in series with battery, optional but gold):</text>
+<text x="40" y="384" fill="#999" font-size="12">0.001 A = asleep → do the wake tap &nbsp;·&nbsp; ~0.067 A = awake, go</text>
+<text x="40" y="404" fill="#999" font-size="12">bouncing/dancing = radio bursts = it's working</text>
+<text x="40" y="428" fill="#7ab7ff" font-size="12">Success = your phone: unit 3 flips green, src "catm1", pattern 1-0-1-0-1-0</text>
+</svg>
+<div class="cap"><b>Three signal wires, that's all.</b> TXD0→RXD and RXD0→TXD (they cross — transmit into receive), GND↔GND always connected. No permanent power wire between the two boards: the red wire is only the 2-second wake touch from 3V3 to PWR. The firmware does everything else on its own — you just wire, power, wake, and watch the map.</div>
+<div class="rule warn">If silence after wake: the loopback test said the fault is on the RAK pins — before re-checking the Waveshare end, confirm you're on the pins the 13002 silkscreen calls <b>TXD0 / RXD0</b> (not TXD1/RXD1, not the SPI row).</div>
+
+<h2>2 · The full kit — fence MVP unit</h2>
+<svg viewBox="0 0 960 640" font-family="-apple-system,sans-serif">
+<defs><marker id="b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
+
+<!-- solar chain -->
+<rect x="20" y="30" width="150" height="80" rx="10" fill="#2e2a1c" stroke="#eab308"/>
+<text x="95" y="63" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">Solar panel</text>
+<text x="95" y="82" fill="#ca8" text-anchor="middle" font-size="11">6 V · 80×80</text>
+<line x1="170" y1="70" x2="230" y2="70" stroke="#eab308" stroke-width="3.5" marker-end="url(#b)"/>
+<text x="200" y="61" fill="#ca8" text-anchor="middle" font-size="10">PV+/PV−</text>
+<rect x="230" y="30" width="130" height="80" rx="10" fill="#2e2a1c" stroke="#eab308"/>
+<text x="295" y="63" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">CN3791</text>
+<text x="295" y="82" fill="#ca8" text-anchor="middle" font-size="11">solar charger</text>
+<line x1="360" y1="70" x2="420" y2="70" stroke="#4ade80" stroke-width="3.5" marker-end="url(#b)"/>
+<text x="390" y="61" fill="#9c9" text-anchor="middle" font-size="10">BAT+/BAT−</text>
+
+<!-- battery -->
+<rect x="420" y="30" width="190" height="80" rx="10" fill="#20362a" stroke="#4ade80"/>
+<text x="515" y="60" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">18650 protected cell</text>
+<text x="515" y="80" fill="#9c9" text-anchor="middle" font-size="11">ONE battery feeds both boards</text>
+<line x1="515" y1="110" x2="515" y2="150" stroke="#4ade80" stroke-width="3.5"/>
+<line x1="330" y1="150" x2="740" y2="150" stroke="#4ade80" stroke-width="3.5"/>
+<line x1="330" y1="150" x2="330" y2="195" stroke="#4ade80" stroke-width="3.5" marker-end="url(#b)"/>
+<line x1="740" y1="150" x2="740" y2="195" stroke="#4ade80" stroke-width="3.5" marker-end="url(#b)"/>
+<text x="330" y="180" fill="#9c9" text-anchor="middle" font-size="10">RAK19001 BAT (JST)</text>
+<text x="740" y="180" fill="#9c9" text-anchor="middle" font-size="10">battery plug</text>
+
+<!-- RAK -->
+<rect x="120" y="195" width="420" height="260" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
+<text x="330" y="222" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">RAK19001 + RAK4631 + RAK13002</text>
+<text x="330" y="240" fill="#7ab7ff" text-anchor="middle" font-size="11">firmware: unit (sensors) + relay radio — LoRa antenna on the 4631, kept clear of the fence metal</text>
+<!-- right pins to modem -->
+<rect x="485" y="258" width="55" height="24" rx="4" fill="#333"/><text x="512" y="275" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">TXD0</text>
+<rect x="485" y="290" width="55" height="24" rx="4" fill="#333"/><text x="512" y="307" fill="#fbbf24" text-anchor="middle" font-size="12" font-weight="700">RXD0</text>
+<rect x="485" y="322" width="55" height="24" rx="4" fill="#333"/><text x="512" y="339" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<!-- bottom pins to sensors -->
+<rect x="150" y="420" width="50" height="24" rx="4" fill="#333"/><text x="175" y="437" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">3V3</text>
+<rect x="210" y="420" width="50" height="24" rx="4" fill="#333"/><text x="235" y="437" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<rect x="270" y="420" width="50" height="24" rx="4" fill="#333"/><text x="295" y="437" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA</text>
+<rect x="330" y="420" width="50" height="24" rx="4" fill="#333"/><text x="355" y="437" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL</text>
+<rect x="390" y="420" width="130" height="24" rx="4" fill="#333"/><text x="455" y="437" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">IO1…IO6 (XSHUT)</text>
+
+<!-- modem -->
+<rect x="620" y="195" width="310" height="260" rx="12" fill="#2b2436" stroke="#a78bfa"/>
+<text x="775" y="222" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">Waveshare Pico-SIM7080G</text>
+<text x="775" y="240" fill="#c4b5fd" text-anchor="middle" font-size="11">same three wires as the tester · switch ON</text>
+<rect x="625" y="258" width="50" height="24" rx="4" fill="#333"/><text x="650" y="275" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">RXD</text>
+<rect x="625" y="290" width="50" height="24" rx="4" fill="#333"/><text x="650" y="307" fill="#fbbf24" text-anchor="middle" font-size="12" font-weight="700">TXD</text>
+<rect x="625" y="322" width="50" height="24" rx="4" fill="#333"/><text x="650" y="339" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<text x="775" y="380" fill="#c4b5fd" font-size="11" text-anchor="middle">LTE antenna fitted · SIM in</text>
+<text x="775" y="400" fill="#c4b5fd" font-size="11" text-anchor="middle">wake handled by firmware note:</text>
+<text x="775" y="418" fill="#c4b5fd" font-size="11" text-anchor="middle">if modem sleeps hard, jumper 3V3→PWR</text>
+<text x="775" y="436" fill="#c4b5fd" font-size="11" text-anchor="middle">gets a proper PWRKEY line on the real carrier</text>
+
+<path d="M540 270 L625 270" stroke="#4ade80" stroke-width="3.5"/>
+<path d="M540 302 L625 302" stroke="#fbbf24" stroke-width="3.5"/>
+<path d="M540 334 L625 334" stroke="#ccc" stroke-width="3.5"/>
+
+<!-- sensor bus -->
+<rect x="20" y="500" width="910 " height="120" rx="12" fill="#26262e" stroke="#555"/>
+<text x="40" y="528" fill="#eee" font-size="14" font-weight="700">6 × TOF050C slot sensors — shared bus, one private wire each</text>
+<text x="40" y="552" fill="#999" font-size="12">Every sensor: VIN→3V3 · GND→GND · SDA→SDA · SCL→SCL &nbsp;(all six share these four lines — daisy-chain is fine)</text>
+<text x="40" y="572" fill="#fb923c" font-size="12">Plus each sensor's XSHUT gets its OWN line: slot 1→IO1 · slot 2→IO2 · slot 3→IO3 · slot 4→IO4 · slot 5→IO5 · slot 6→IO6</text>
+<text x="40" y="592" fill="#999" font-size="12">IO1/IO2 are on the RAK13002 header; IO3–IO6 live on the RAK19001 sensor-slot pads (slots C–F) — confirm each against the base-board silkscreen.</text>
+<text x="40" y="610" fill="#7ab7ff" font-size="12">Slot order matters: the number painted on the cradle must match the IO number, or the portal shows the wrong slot moving.</text>
+<line x1="330" y1="455" x2="330" y2="500" stroke="#888" stroke-width="2.5" marker-end="url(#b)"/>
+</svg>
+<div class="cap"><b>Power:</b> one protected 18650 feeds both boards (both take a 3.7 V Li-ion input); the solar panel keeps it topped up through the CN3791. In the field nothing else charges it — don't have both boards' USB leads plugged in at once while the battery is bridged, that's two chargers arguing. <b>Sensors:</b> four shared wires plus one XSHUT each — the firmware wakes them one at a time to give each its own I2C address, which is why every sensor needs its private IO line. <b>Radios:</b> LoRa antenna and LTE antenna both fitted before power-up, mounted clear of the fence's metal.</div>
+<div class="rule">Build order that can't hurt anything: wire everything with the PSU/battery disconnected → double-check the six XSHUT lines against silkscreen → connect battery → meter sanity check → then USB only if you want the transcript.</div>
+</body></html>
