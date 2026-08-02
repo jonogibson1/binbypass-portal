@@ -1,6 +1,10 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bin Bypass Live</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+#map{height:340px;border-radius:12px;margin:10px 0;background:#222}
+.leaflet-container{font:inherit}
 body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:18px;max-width:720px;margin:auto}
 h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margin:10px 0}
 .slots{display:flex;gap:5px;margin:8px 0}
@@ -10,6 +14,7 @@ h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margi
 </style></head><body>
 <h1>Bin Bypass Live — fleet (anywhere)</h1>
 <div class="card meta">Live fleet view — reads the cloud database (Supabase, Sydney) directly. Refreshes every 5&nbsp;s. Data path: unit → HiveMQ Cloud MQTT → ingest → Postgres → here. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a></div>
+<div id="map"></div>
 <div id="root">loading…</div>
 <script>
 const SUPABASE_URL = "https://kyjrqpibtncvhxwcaovx.supabase.co";
@@ -19,9 +24,32 @@ async function sb(path){
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
   return r.json();
 }
+
+const map = L.map("map",{scrollWheelZoom:false}).setView([-27.4,153.0],10);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  {attribution:"Imagery: Esri World Imagery",maxZoom:19}).addTo(map);
+const markers = {};
+let fitted = false;
+function plot(units){
+  const located = units.filter(u=>u.lat!=null);
+  for(const u of located){
+    const fresh = (Date.now()-Date.parse(u.last_seen)) < 30*60*1000;
+    const style = {radius:9,color:"#fff",weight:2,fillColor:fresh?"#4ade80":"#e0b040",fillOpacity:0.9};
+    if(markers[u.unit_id]){ markers[u.unit_id].setLatLng([u.lat,u.lon]).setStyle(style); }
+    else {
+      markers[u.unit_id] = L.circleMarker([u.lat,u.lon],style).addTo(map)
+        .bindPopup(()=>`<b>Unit ${u.unit_id}</b><br>last seen ${u.last_seen}<br>±${u.acc_m??"?"} m`);
+    }
+  }
+  if(!fitted && located.length){
+    map.fitBounds(located.map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:17});
+    fitted = true;
+  }
+}
 async function tick(){
   try{
     const units = await sb("units?select=*&order=last_seen.desc");
+    plot(units);
     let h="";
     for(const u of units){
       const pk = await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
