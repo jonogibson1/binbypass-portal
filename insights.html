@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bin Bypass — Trial Insights</title>
+<title>Bin Bypass — Live Insights</title>
 <style>
 :root{--bg:#16161a;--card:#232329;--ink:#eee;--dim:#999;--green:#4ade80;--green2:#166534;--line:#333;--accent:#7ab7ff}
 *{box-sizing:border-box}
@@ -15,110 +15,187 @@ h2{font-size:16px;margin:26px 0 4px}
 .kpi span{font-size:12px;color:var(--dim)}
 .cap{color:var(--dim);font-size:12px;margin-top:6px;line-height:1.5}
 .badge{display:inline-block;font-size:11px;border:1px solid var(--green2);color:var(--green);border-radius:10px;padding:2px 9px;margin-left:6px;vertical-align:middle}
-ul{margin:8px 0;padding-left:20px;font-size:14px;line-height:1.6}
 svg{width:100%;height:auto;display:block}
 .axis{stroke:#3a3a42;stroke-width:1}
 .tick{fill:#888;font-size:10px}
 .note{background:#1c2b22;border:1px solid var(--green2);border-radius:12px;padding:12px 14px;font-size:13px;color:#cde;line-height:1.5}
 footer{color:#666;font-size:12px;margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
 a{color:var(--accent)}
+.empty{color:var(--dim);font-size:13px;padding:18px 0;text-align:center}
 </style></head><body>
 <header>
-<h1>Bin Bypass field trial — one month in</h1>
-<div class="sub">28 May – 30 June 2026 · eight units · six slots each · a reading every five minutes<br>
-Report 1 of 3 · interactive edition <span class="badge">future-app preview</span></div>
+<h1>Bin Bypass — live insights</h1>
+<div class="sub" id="sub">computing from the fleet database…</div>
 </header>
 
-<div class="note"><b>A note on the numbers.</b> Fleet volumes marked <i>projected</i> are scaled up from measured per-unit usage. Behavioural findings (when people deposit, how fast containers move, contamination) are measured directly. Bench-test data is excluded.</div>
+<div class="note"><b>Live numbers.</b> Everything on this page is computed from the fleet database the moment you load it — the same slot events the units report. No projections, no manual reports. Early in a deployment the charts will be sparse; they fill in as the fleet works.</div>
 
-<div class="kpis">
-<div class="kpi"><b>~3,200</b><span>deposits per month, projected — about 95 a day</span></div>
-<div class="kpi"><b>6.9h → 1.0h</b><span>average wait before collection, week one vs late June</span></div>
-<div class="kpi"><b>4%</b><span>of containers show the contamination signature (left behind &gt;24h)</span></div>
-<div class="kpi"><b>1 in 7</b><span>hours the busiest unit spent full — almost all in the opening days</span></div>
-</div>
+<div class="kpis" id="kpis"></div>
 
-<h2>Deposits per week <span class="badge">projected</span></h2>
-<div class="card"><svg viewBox="0 0 720 260" id="weekly"></svg>
-<div class="cap">Deposits per week, scaled to the eight-unit fleet. The shape of the weeks is measured; the totals are projected. * = partial week.</div></div>
+<h2>Deposits per week <span class="badge">measured</span></h2>
+<div class="card"><svg viewBox="0 0 720 260" id="weekly"></svg><div class="empty" id="weekly-empty" style="display:none">no deposits recorded yet</div>
+<div class="cap">Containers deposited across the fleet, by week.</div></div>
 
-<h2>Collection is getting faster</h2>
-<div class="card"><svg viewBox="0 0 720 240" id="wait"></svg>
-<div class="cap">Average wait before collection by week, suspected contamination excluded. Seven hours in week one, about an hour by late June — with no intervention from us.</div></div>
+<h2>Collection speed by week</h2>
+<div class="card"><svg viewBox="0 0 720 240" id="wait"></svg><div class="empty" id="wait-empty" style="display:none">no completed collections yet</div>
+<div class="cap">Average wait between deposit and collection, by the week the container went in. Sensor faults excluded.</div></div>
 
-<h2>Capacity at the busiest position</h2>
-<div class="card"><svg viewBox="0 0 720 240" id="capacity"></svg>
-<div class="cap">Average slots occupied per day. It ran near the six-slot ceiling in the opening days, then settled well below as collections sped up.</div></div>
+<h2>Capacity at the busiest unit</h2>
+<div class="card"><svg viewBox="0 0 720 240" id="capacity"></svg><div class="empty" id="capacity-empty" style="display:none">not enough history yet</div>
+<div class="cap" id="capacity-cap">Average slots occupied per day at the unit with the most deposits.</div></div>
 
 <h2>Daily rhythm</h2>
-<div class="card"><svg viewBox="0 0 720 250" id="rhythm"></svg>
-<div class="cap"><span style="color:var(--green)">■</span> deposits&nbsp;&nbsp;<span style="color:#aaa">◻</span> collections — share of daily activity by hour. Deposit in the afternoon (2–4pm peak), collect the next morning (8–9am). Monday is the busiest day.</div></div>
+<div class="card"><svg viewBox="0 0 720 250" id="rhythm"></svg><div class="empty" id="rhythm-empty" style="display:none">not enough events yet</div>
+<div class="cap"><span style="color:var(--green)">■</span> deposits&nbsp;&nbsp;<span style="color:#aaa">◻</span> collections — share of activity by hour of day (local time).</div></div>
 
 <h2>How long containers stay</h2>
-<div class="card"><svg viewBox="0 0 720 230" id="stay"></svg>
-<div class="cap">Stay durations across the month. The over-24-hour group is where the suspected contamination sits.</div></div>
+<div class="card"><svg viewBox="0 0 720 230" id="stay"></svg><div class="empty" id="stay-empty" style="display:none">no stays recorded yet</div>
+<div class="cap">Stay durations. The over-24-hour group is the contamination signature: a container everyone inspected and left behind.</div></div>
 
-<h2>What we are learning</h2>
-<div class="card"><ul>
-<li><b>A container nobody collects is a signal in itself.</b> When its neighbours keep being taken and it stays put, it has almost certainly been inspected and rejected — a contamination measure per location, without inspection records.</li>
-<li><b>The collector network builds itself.</b> Collections became faster every week without any intervention. The service is becoming part of people's routine.</li>
-<li><b>Placement matters.</b> Demand varies considerably between positions only tens of metres apart. The data will show which positions earn their place.</li>
-<li><b>Five-minute logging is the right resolution.</b> Fine enough for the daily rhythm, full-capacity periods and the contamination signature; each unit holds months of history.</li>
-</ul></div>
-
-<h2>Next steps</h2>
-<div class="card" style="font-size:14px;line-height:1.6">Troubleshooting continues unit by unit. The second monthly report will carry measured fleet numbers in place of the projections, plus what the data says about placement and automatic contamination flagging.<br><br>
-<span class="cap">Unit positions are on the <a href="index.html">live fleet map</a>.</span></div>
-
-<footer>Bin Bypass · field trial report 1 of 3 · July 2026 · hello@binbypass.com · <a href="index.html">live fleet</a></footer>
+<footer>Bin Bypass · live insights · computed <span id="stamp"></span> · <a href="index.html">live fleet map</a></footer>
 
 <script>
-const NS="http://www.w3.org/2000/svg";
-function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
-function txt(p,x,y,s,anchor="middle",cls="tick"){const e=el(p,"text",{x,y,"text-anchor":anchor,class:cls});e.textContent=s;return e}
+const SUPABASE_URL = "https://kyjrqpibtncvhxwcaovx.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // publishable, read-only via RLS
 
-function bars(id,labels,vals,{unit="",max=null,color="#4ade80",hatch=false,starred=[]}={}){
-  const s=document.getElementById(id),W=720,H=+s.viewBox.baseVal.height,P={l:44,r:10,t:16,b:34};
-  const m=max||Math.max(...vals)*1.15, iw=(W-P.l-P.r)/vals.length;
-  if(hatch){const d=el(s,"defs",{});const pat=el(d,"pattern",{id:id+"h",width:"6",height:"6",patternUnits:"userSpaceOnUse",patternTransform:"rotate(45)"});el(pat,"rect",{width:6,height:6,fill:"#1c2b22"});el(pat,"line",{x1:0,y1:0,x2:0,y2:6,stroke:color,"stroke-width":1.4});}
-  el(s,"line",{x1:P.l,y1:H-P.b,x2:W-P.r,y2:H-P.b,class:"axis"});
-  vals.forEach((v,i)=>{
-    const h=(H-P.t-P.b)*v/m, x=P.l+i*iw+iw*0.16, w=iw*0.68, y=H-P.b-h;
-    el(s,"rect",{x,y,width:w,height:h,rx:4,fill:hatch?`url(#${id}h)`:color,stroke:hatch?color:"none","stroke-width":hatch?1:0});
-    txt(s,x+w/2,y-6,v+unit);
-    txt(s,x+w/2,H-P.b+16,labels[i]+(starred.includes(i)?"*":""));
-  });
+async function sb(path){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
+  return r.json();
+}
+async function allEvents(){
+  const out = [];
+  for(let page=0; page<10; page++){
+    const batch = await sb(`slot_events?select=unit_id,slot,state,changed_at&order=id.asc&limit=1000&offset=${page*1000}`);
+    out.push(...batch);
+    if(batch.length < 1000) return {events:out, partial:false};
+  }
+  return {events:out, partial:true};
 }
 
-function line(id,vals,{max=null,color="#4ade80",fill=true,ceiling=null,labels=[],dash=false,secondary=null}={}){
-  const s=document.getElementById(id),W=720,H=+s.viewBox.baseVal.height,P={l:44,r:12,t:18,b:30};
-  const m=max||Math.max(...vals)*1.15, n=vals.length;
+// ---------- tiny chart helpers ----------
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+function txt(p,x,y,s,anchor="middle"){const e=el(p,"text",{x,y,"text-anchor":anchor,class:"tick"});e.textContent=s;return e}
+function bars(id,labels,vals,{unit="",max=null,color="#4ade80"}={}){
+  const s=document.getElementById(id);if(!vals.length){s.style.display="none";document.getElementById(id+"-empty").style.display="block";return}
+  const W=720,H=+s.viewBox.baseVal.height,P={l:44,r:10,t:16,b:34};
+  const m=max||Math.max(...vals)*1.15||1, iw=(W-P.l-P.r)/vals.length;
+  el(s,"line",{x1:P.l,y1:H-P.b,x2:W-P.r,y2:H-P.b,class:"axis"});
+  vals.forEach((v,i)=>{
+    const h=(H-P.t-P.b)*v/m, x=P.l+i*iw+iw*0.16, w=Math.min(iw*0.68,90), y=H-P.b-h;
+    el(s,"rect",{x,y,width:w,height:h,rx:4,fill:color});
+    txt(s,x+w/2,y-6,(Math.round(v*10)/10)+unit);
+    txt(s,x+w/2,H-P.b+16,labels[i]);
+  });
+}
+function line(id,vals,{max=null,color="#4ade80",fill=true,ceiling=null,labels=[],secondary=null}={}){
+  const s=document.getElementById(id);if(vals.length<2){s.style.display="none";document.getElementById(id+"-empty").style.display="block";return}
+  const W=720,H=+s.viewBox.baseVal.height,P={l:44,r:12,t:18,b:30};
+  const m=max||Math.max(...vals,...(secondary||[]))*1.15||1, n=vals.length;
   const X=i=>P.l+(W-P.l-P.r)*i/(n-1), Y=v=>H-P.b-(H-P.t-P.b)*v/m;
   el(s,"line",{x1:P.l,y1:H-P.b,x2:W-P.r,y2:H-P.b,class:"axis"});
   for(let g=1;g<=4;g++){const gy=H-P.b-(H-P.t-P.b)*g/4;el(s,"line",{x1:P.l,y1:gy,x2:W-P.r,y2:gy,stroke:"#26262c"});txt(s,P.l-8,gy+3,(m*g/4).toFixed(m>10?0:1),"end")}
   if(ceiling!==null){el(s,"line",{x1:P.l,y1:Y(ceiling),x2:W-P.r,y2:Y(ceiling),stroke:"#888","stroke-dasharray":"3 4"});txt(s,W-P.r,Y(ceiling)-5,"full capacity ("+ceiling+" slots)","end")}
   const path=vals.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
   if(fill)el(s,"path",{d:path+`L${X(n-1)} ${H-P.b}L${X(0)} ${H-P.b}Z`,fill:color,opacity:0.13});
-  el(s,"path",{d:path,fill:"none",stroke:color,"stroke-width":2,...(dash?{"stroke-dasharray":"5 4"}:{})});
+  el(s,"path",{d:path,fill:"none",stroke:color,"stroke-width":2});
   if(secondary){const p2=secondary.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");el(s,"path",{d:p2,fill:"none",stroke:"#aaa","stroke-width":2,"stroke-dasharray":"5 4"})}
   labels.forEach(([i,t])=>txt(s,X(i),H-P.b+16,t));
 }
 
-bars("weekly",["w/c 25 May","w/c 1 Jun","w/c 8 Jun","w/c 15 Jun","w/c 22 Jun","w/c 29 Jun"],
-     [418,946,646,264,767,193],{hatch:true,starred:[0,5]});
+// ---------- the analysis ----------
+function weekStart(t){const d=new Date(t);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
+function fmtWc(t){const d=new Date(t);return "w/c "+d.getDate()+" "+d.toLocaleString("en",{month:"short"})}
+function fmtDwell(h){return h==null?"—":h<1?Math.round(h*60)+" min":h.toFixed(1)+" h"}
 
-bars("wait",["w/c 25 May","w/c 1 Jun","w/c 8 Jun","w/c 15 Jun","w/c 22 Jun"],
-     [6.9,3.7,3.9,1.3,1.0],{unit:"h",max:8,starred:[0]});
+(async ()=>{
+  const [{events, partial}, units] = await Promise.all([allEvents(), sb("units?select=unit_id,last_seen")]);
+  document.getElementById("stamp").textContent = new Date().toLocaleString() + (partial?" · large history: latest 10,000 events":"");
 
-line("capacity",[4.0,5.1,4.6,4.0,2.5,4.5,5.0,5.8,5.0,2.2,1.6,1.5,2.2,2.1,2.0,2.1,2.1,2.0,2.7,2.3,2.0,2.0,2.0,2.0,2.0,1.4,0.9,0.8,0.3,0.1,0.6,1.4,0.6,2.5,1.2],
-     {max:6.4,ceiling:6,labels:[[0,"27 May"],[8,"04 Jun"],[16,"12 Jun"],[24,"20 Jun"],[33,"29 Jun"]]});
+  const deposits=[], stays=[], openSince={};
+  const perUnitDeposits={};
+  for(const e of events){
+    const t=Date.parse(e.changed_at), key=e.unit_id+"/"+e.slot;
+    if(e.state===1){
+      openSince[key]=t; deposits.push({t,unit:e.unit_id,hour:new Date(t).getHours()});
+      perUnitDeposits[e.unit_id]=(perUnitDeposits[e.unit_id]||0)+1;
+    } else if(e.state===0 && openSince[key]!=null){
+      stays.push({tIn:openSince[key], tOut:t, dwellH:(t-openSince[key])/3600000, unit:e.unit_id, hourOut:new Date(t).getHours()});
+      delete openSince[key];
+    } else if(e.state===255){ delete openSince[key]; }
+  }
+  const now=Date.now();
+  const openStays=Object.values(openSince).map(t=>(now-t)/3600000);
 
-line("rhythm",[4,2.5,3.4,3.3,3.2,2.2,1.4,3.5,6.8,4.8,3.2,2.2,4.7,3.8,9.9,7.5,5.5,4.4,4.4,4.5,2.6,3.5,5.9,2.6],
-     {max:11,fill:false,labels:[[0,"0:00"],[3,"3:00"],[6,"6:00"],[9,"9:00"],[12,"12:00"],[15,"15:00"],[18,"18:00"],[21,"21:00"]],
-      secondary:[4,3.2,3.5,3.4,3.2,2.4,1.6,4.5,8.8,4.5,3.0,2.4,6.3,6.2,5.5,5.2,4.8,4.7,4.0,3.3,3.6,4.4,4.3,2.5]});
+  // header
+  const active=units.filter(u=>now-Date.parse(u.last_seen)<24*3600000).length;
+  document.getElementById("sub").innerHTML =
+    `${units.length} unit${units.length===1?"":"s"} · ${active} reporting in the last 24 h · live edition <span class="badge">computed from the database</span>`;
 
-bars("stay",["Under 1 hour","1–6 hours","6–24 hours","Over 24 hours"],
-     [60,20,15,5],{unit:"%",max:70,color:"#4ade80"});
-document.querySelectorAll("#stay rect")[3]?.setAttribute("fill","#556");
+  // KPIs
+  const d30=deposits.filter(d=>now-d.t<30*86400000).length;
+  const avgDwell=stays.length?stays.reduce((a,s)=>a+s.dwellH,0)/stays.length:null;
+  const over24=stays.filter(s=>s.dwellH>24).length + openStays.filter(h=>h>24).length;
+  const totalStays=stays.length+openStays.length;
+  const contam=totalStays?Math.round(100*over24/totalStays):null;
+  document.getElementById("kpis").innerHTML =
+    `<div class="kpi"><b>${d30}</b><span>containers deposited, past 30 days</span></div>`+
+    `<div class="kpi"><b>${fmtDwell(avgDwell)}</b><span>average wait before collection</span></div>`+
+    `<div class="kpi"><b>${contam==null?"—":contam+"%"}</b><span>stays over 24 h — the contamination signature</span></div>`+
+    `<div class="kpi"><b>${stays.length}</b><span>containers collected, all time</span></div>`;
+
+  // weekly deposits (up to last 8 weeks with data)
+  const wkMap={};
+  deposits.forEach(d=>{const w=weekStart(d.t);wkMap[w]=(wkMap[w]||0)+1});
+  const wks=Object.keys(wkMap).map(Number).sort((a,b)=>a-b).slice(-8);
+  bars("weekly",wks.map(fmtWc),wks.map(w=>wkMap[w]));
+
+  // collection speed by week of deposit
+  const wMap={};
+  stays.forEach(s=>{const w=weekStart(s.tIn);(wMap[w]=wMap[w]||[]).push(s.dwellH)});
+  const wks2=Object.keys(wMap).map(Number).sort((a,b)=>a-b).slice(-8);
+  bars("wait",wks2.map(fmtWc),wks2.map(w=>wMap[w].reduce((a,b)=>a+b,0)/wMap[w].length),{unit:"h"});
+
+  // capacity replay at the busiest unit (last 35 days)
+  const busiest=Object.entries(perUnitDeposits).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  if(busiest){
+    const ev=events.filter(e=>e.unit_id===busiest).map(e=>({t:Date.parse(e.changed_at),slot:e.slot,state:e.state})).sort((a,b)=>a.t-b.t);
+    if(ev.length>=2){
+      const day=86400000, start=Math.max(ev[0].t, now-35*day);
+      const dayIdx=t=>Math.floor((t-start)/day);
+      const nDays=dayIdx(now)+1, occSec=new Array(nDays).fill(0);
+      const slotState={}; let occ=0, prevT=start;
+      for(const e of ev.filter(e=>e.t>=start).concat([{t:now,slot:-1,state:-1}])){
+        let t0=prevT;
+        while(t0<e.t){const di=dayIdx(t0);const dayEnd=start+(di+1)*day;const seg=Math.min(e.t,dayEnd)-t0;if(di>=0&&di<nDays)occSec[di]+=occ*seg;t0+=seg}
+        if(e.slot>=0){const was=slotState[e.slot]===1;const is=e.state===1;occ+=(is?1:0)-(was?1:0);slotState[e.slot]=e.state}
+        prevT=e.t;
+      }
+      const series=occSec.map(s=>s/day);
+      const lb=[[0,new Date(start).getDate()+" "+new Date(start).toLocaleString("en",{month:"short"})],[series.length-1,"today"]];
+      if(series.length>4)lb.splice(1,0,[Math.floor(series.length/2),new Date(start+Math.floor(series.length/2)*day).getDate()+" "+new Date(start+Math.floor(series.length/2)*day).toLocaleString("en",{month:"short"})]);
+      line("capacity",series,{max:6.4,ceiling:6,labels:lb});
+      document.getElementById("capacity-cap").textContent=`Average slots occupied per day at unit ${busiest} — the busiest position (${perUnitDeposits[busiest]} deposits).`;
+    } else { line("capacity",[],{}) }
+  } else { line("capacity",[],{}) }
+
+  // daily rhythm (needs a reasonable sample)
+  if(deposits.length+stays.length>=20){
+    const dh=new Array(24).fill(0), ch=new Array(24).fill(0);
+    deposits.forEach(d=>dh[d.hour]++); stays.forEach(s=>ch[s.hourOut]++);
+    const dTot=deposits.length||1, cTot=stays.length||1;
+    line("rhythm",dh.map(v=>100*v/dTot),{fill:false,secondary:ch.map(v=>100*v/cTot),
+      labels:[[0,"0:00"],[6,"6:00"],[12,"12:00"],[18,"18:00"],[23,"23:00"]]});
+  } else { line("rhythm",[],{}) }
+
+  // stay buckets
+  const all=[...stays.map(s=>s.dwellH),...openStays];
+  if(all.length){
+    const b=[0,0,0,0];
+    all.forEach(h=>b[h<1?0:h<6?1:h<24?2:3]++);
+    bars("stay",["Under 1 hour","1–6 hours","6–24 hours","Over 24 hours"],b.map(v=>Math.round(100*v/all.length)),{unit:"%",max:100});
+    document.querySelectorAll("#stay rect")[3]?.setAttribute("fill","#556");
+  } else { bars("stay",[],[]) }
+})();
 </script>
 </body></html>
