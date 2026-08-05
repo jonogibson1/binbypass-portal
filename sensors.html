@@ -1,0 +1,124 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass — six-sensor wiring</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:1000px;margin:auto;line-height:1.55}
+h1{font-size:21px;margin-bottom:4px}h2{font-size:17px;margin:30px 0 8px}h3{font-size:15px;margin:18px 0 6px}
+.sub{color:#999;font-size:13px}
+.rule{background:#1c2b22;border:1px solid #166534;border-radius:12px;padding:11px 15px;font-size:13px;margin:12px 0}
+.warn{background:#2b1c1c;border-color:#7f1d1d}
+.info{background:#1c2331;border-color:#1e40af}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid #333}
+th{color:#999;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12px}
+svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;margin:10px 0}
+.sensor{background:#232329;border-radius:12px;padding:14px;margin:10px 0}
+.pill{display:inline-block;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:700;margin-right:6px}
+.p3v3{background:#3a2020;color:#f87171}.pgnd{background:#333;color:#ccc}
+.psda{background:#1e3a5f;color:#60a5fa}.pscl{background:#2e2440;color:#a78bfa}
+.pce{background:#3a2e1c;color:#fb923c}
+</style></head><body>
+
+<h1>Six-slot sensor wiring — TOF050C on unit 3</h1>
+<div class="sub">RAK19001 + RAK4631 + RAK13002 · VL6180X sensors · shared I²C, one enable line each</div>
+
+<div class="rule">Golden rule, still: <b>read the silkscreen, never count pin positions.</b> Wire everything with power disconnected, check it twice, then power up.</div>
+
+<h2>Why each sensor needs its own enable wire</h2>
+<p>Every VL6180X leaves the factory with the <b>same I²C address (0x29)</b>. Six of them on one bus would all answer at once and the bus would be useless. The fix is the <code>CE</code> (chip-enable / XSHUT) pin: the firmware holds all six sensors in reset, then wakes them <b>one at a time</b>, giving each a new address as it comes up — 0x30, 0x31, 0x32 and so on.</p>
+<p>That is why the four bus wires are shared by everyone, and the fifth wire is private to each sensor. Get a CE wire on the wrong pin and that slot reports the wrong container.</p>
+
+<h2>The map — which sensor goes where</h2>
+<table>
+<tr><th>Slot</th><th>Sensor CE wire →</th><th>Firmware name</th><th>nRF52840 pin</th><th>Note</th></tr>
+<tr><td><b>1</b></td><td><code>IO1</code></td><td>WB_IO1</td><td>P0.17</td><td>—</td></tr>
+<tr><td><b>2</b></td><td><code>IO2</code></td><td>WB_IO2</td><td>P1.02</td><td>see header note below</td></tr>
+<tr><td><b>3</b></td><td><code>IO3</code></td><td>WB_IO3</td><td>P0.21</td><td>—</td></tr>
+<tr><td><b>4</b></td><td><code>IO4</code></td><td>WB_IO4</td><td>P0.04</td><td>—</td></tr>
+<tr><td><b>5</b></td><td><code>IO5</code></td><td>WB_IO5</td><td>P0.09</td><td><b>NFC pin</b> — see warning</td></tr>
+<tr><td><b>6</b></td><td><code>IO6</code></td><td>WB_IO6</td><td>P0.10</td><td><b>NFC pin</b> — see warning</td></tr>
+</table>
+
+<div class="rule warn"><b>Slots 5 and 6 — the NFC trap.</b> P0.09 and P0.10 are the nRF52840's NFC antenna pins and are <b>not GPIO by default</b>. Wire them perfectly and both slots will still read as faulted. Fixed in firmware by <code>-DCONFIG_NFCT_PINS_AS_GPIOS</code>, which I have now added to <code>firmware/unit/platformio.ini</code>. It writes the chip's UICR on first boot and needs one power cycle to take effect. If exactly slots 5 and 6 fail, this is why — not the sensors.</div>
+
+<div class="rule info"><b>Header note for slot 2.</b> The RAK13002's silkscreen breaks out <code>IO1, IO3, IO4, IO5, IO6, IO7</code> — <b>IO2 may not be on that header</b>. If you cannot find an IO2 pad, do not improvise: tell me and I will remap slot 2 to <code>IO7</code> in firmware and reflash (I can do that without you touching the board). One line of code beats a bodge wire.</div>
+
+<h2>The shared bus — four wires, all six sensors</h2>
+<svg viewBox="0 0 960 300" font-family="-apple-system,sans-serif">
+<rect x="20" y="30" width="200" height="230" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
+<text x="120" y="58" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">RAK13002</text>
+<text x="120" y="76" fill="#7ab7ff" text-anchor="middle" font-size="11">on unit 3</text>
+<rect x="150" y="95" width="62" height="24" rx="4" fill="#3a2020"/><text x="181" y="112" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">3V3</text>
+<rect x="150" y="130" width="62" height="24" rx="4" fill="#333"/><text x="181" y="147" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<rect x="150" y="165" width="62" height="24" rx="4" fill="#1e3a5f"/><text x="181" y="182" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA</text>
+<rect x="150" y="200" width="62" height="24" rx="4" fill="#2e2440"/><text x="181" y="217" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL</text>
+
+<path d="M212 107 L900 107" stroke="#f87171" stroke-width="3"/>
+<path d="M212 142 L900 142" stroke="#ccc" stroke-width="3"/>
+<path d="M212 177 L900 177" stroke="#60a5fa" stroke-width="3"/>
+<path d="M212 212 L900 212" stroke="#a78bfa" stroke-width="3"/>
+
+<g font-size="11" fill="#888">
+<text x="560" y="99" text-anchor="middle">every sensor's VIN</text>
+<text x="560" y="134" text-anchor="middle">every sensor's GND</text>
+<text x="560" y="169" text-anchor="middle">every sensor's SDA</text>
+<text x="560" y="204" text-anchor="middle">every sensor's SCL</text>
+</g>
+<g>
+<circle cx="330" cy="107" r="5" fill="#f87171"/><circle cx="450" cy="107" r="5" fill="#f87171"/><circle cx="570" cy="107" r="5" fill="#f87171"/><circle cx="690" cy="107" r="5" fill="#f87171"/><circle cx="810" cy="107" r="5" fill="#f87171"/>
+<circle cx="330" cy="142" r="5" fill="#ccc"/><circle cx="450" cy="142" r="5" fill="#ccc"/><circle cx="570" cy="142" r="5" fill="#ccc"/><circle cx="690" cy="142" r="5" fill="#ccc"/><circle cx="810" cy="142" r="5" fill="#ccc"/>
+<circle cx="330" cy="177" r="5" fill="#60a5fa"/><circle cx="450" cy="177" r="5" fill="#60a5fa"/><circle cx="570" cy="177" r="5" fill="#60a5fa"/><circle cx="690" cy="177" r="5" fill="#60a5fa"/><circle cx="810" cy="177" r="5" fill="#60a5fa"/>
+<circle cx="330" cy="212" r="5" fill="#a78bfa"/><circle cx="450" cy="212" r="5" fill="#a78bfa"/><circle cx="570" cy="212" r="5" fill="#a78bfa"/><circle cx="690" cy="212" r="5" fill="#a78bfa"/><circle cx="810" cy="212" r="5" fill="#a78bfa"/>
+</g>
+<text x="560" y="255" fill="#999" text-anchor="middle" font-size="12">daisy-chaining is fine — every sensor taps the same four lines</text>
+</svg>
+
+<h2>Each sensor, one at a time</h2>
+<p>Every TOF050C gets <b>five wires</b>: four shared, one private. Wire them in slot order and label each CE wire as you go — a mislabelled CE is invisible until the data is wrong.</p>
+
+<div class="sensor"><h3>Slot 1 — CE to <code>IO1</code></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO1</span></div>
+
+<div class="sensor"><h3>Slot 2 — CE to <code>IO2</code></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO2</span>
+<div class="sub" style="margin-top:8px">If there is no IO2 pad on the header, stop and tell me — firmware remap, not a bodge.</div></div>
+
+<div class="sensor"><h3>Slot 3 — CE to <code>IO3</code></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO3</span></div>
+
+<div class="sensor"><h3>Slot 4 — CE to <code>IO4</code></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO4</span></div>
+
+<div class="sensor"><h3>Slot 5 — CE to <code>IO5</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO5</span></div>
+
+<div class="sensor"><h3>Slot 6 — CE to <code>IO6</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO6</span></div>
+
+<h2>Before you power up</h2>
+<table>
+<tr><th>Check</th><th>Why</th></tr>
+<tr><td>No 3V3 touching GND anywhere</td><td>A short here kills the whole rig, not just a sensor</td></tr>
+<tr><td>SDA and SCL not swapped</td><td>Bus stays silent; every sensor reads as faulted</td></tr>
+<tr><td>Each CE on its own pin, none shared</td><td>Two sensors on one CE = address collision = both lost</td></tr>
+<tr><td>CE wires labelled 1–6 matching the cradle numbers</td><td>Otherwise the portal shows the wrong slot filling</td></tr>
+<tr><td>Sensor faces the container, nothing in front of the window</td><td>VL6180X range is ~180 mm; a smear of glue reads as "occupied"</td></tr>
+</table>
+
+<div class="rule">Power up on the bench supply with the limit at <b>~100 mA</b> and watch the current before anything else. Six sensors idle at a few mA; a jump to the limit means a short — kill it and recheck.</div>
+
+<h2>What happens when you power on</h2>
+<p>The firmware holds every CE low (all sensors asleep), then brings them up one at a time and readdresses each. On the console you get a boot line listing which sensors answered:</p>
+<p><code>{"boot":...,"sensors_ok":[1,1,1,1,1,1]}</code></p>
+<table>
+<tr><th>Result</th><th>Means</th></tr>
+<tr><td>All six <code>1</code></td><td>Wiring is right. Send <code>RANGE</code> to see live millimetres per slot</td></tr>
+<tr><td>Exactly slots 5 and 6 zero</td><td>The NFC pin flag — reflash with the fix, power cycle once</td></tr>
+<tr><td>One slot zero</td><td>That sensor's CE wire, or its power/ground</td></tr>
+<tr><td>All six zero</td><td>The shared bus — SDA/SCL swapped, or no power to the sensors</td></tr>
+</table>
+
+<p class="sub">Occupied/empty flips at an 80 mm threshold. <code>RANGE</code> reports raw millimetres per slot and is the tool for setting that threshold against real cradle geometry.</p>
+
+<div class="sub" style="margin-top:26px;border-top:1px solid #333;padding-top:12px">Pin numbers taken from <code>firmware/variants/WisCore_RAK4631_Board/variant.h</code> and the XSHUT array in <code>firmware/unit/src/main.cpp</code>, not from memory. If the firmware pin map changes, this page is wrong until it is regenerated.</div>
+</body></html>
