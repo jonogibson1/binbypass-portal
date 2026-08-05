@@ -32,7 +32,7 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <table>
 <tr><th>Slot</th><th>Sensor CE wire →</th><th>Firmware name</th><th>nRF52840 pin</th><th>Note</th></tr>
 <tr><td><b>1</b></td><td><code>IO1</code></td><td>WB_IO1</td><td>P0.17</td><td>—</td></tr>
-<tr><td><b>2</b></td><td><code>IO2</code></td><td>WB_IO2</td><td>P1.02</td><td>see header note below</td></tr>
+<tr><td><b>2</b></td><td><code>SW1</code></td><td>WB_SW1</td><td>P1.01</td><td>not IO2 — see note</td></tr>
 <tr><td><b>3</b></td><td><code>IO3</code></td><td>WB_IO3</td><td>P0.21</td><td>—</td></tr>
 <tr><td><b>4</b></td><td><code>IO4</code></td><td>WB_IO4</td><td>P0.04</td><td>—</td></tr>
 <tr><td><b>5</b></td><td><code>IO5</code></td><td>WB_IO5</td><td>P0.09</td><td><b>NFC pin</b> — see warning</td></tr>
@@ -41,7 +41,7 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 
 <div class="rule warn"><b>Slots 5 and 6 — the NFC trap.</b> P0.09 and P0.10 are the nRF52840's NFC antenna pins and are <b>not GPIO by default</b>. Wire them perfectly and both slots will still read as faulted. Fixed in firmware by <code>-DCONFIG_NFCT_PINS_AS_GPIOS</code>, which I have now added to <code>firmware/unit/platformio.ini</code>. It writes the chip's UICR on first boot and needs one power cycle to take effect. If exactly slots 5 and 6 fail, this is why — not the sensors.</div>
 
-<div class="rule info"><b>Header note for slot 2.</b> The RAK13002's silkscreen breaks out <code>IO1, IO3, IO4, IO5, IO6, IO7</code> — <b>IO2 may not be on that header</b>. If you cannot find an IO2 pad, do not improvise: tell me and I will remap slot 2 to <code>IO7</code> in firmware and reflash (I can do that without you touching the board). One line of code beats a bodge wire.</div>
+<div class="rule info"><b>Slot 2 goes to <code>SW1</code>, not IO2 — this is deliberate.</b> The RAK13002 has no IO2 pad at all; it breaks out <code>IO1, IO3, IO4, IO5, IO6, IO7</code> (confirmed in RAK's datasheet). The firmware originally asked for <code>WB_IO2</code>, which does not exist on this module, so slot 2 could never have worked. It now uses <code>WB_SW1</code> — the free GPIO on that header, printed on the silkscreen as <b>SW1</b>. <code>A0</code> is battery sense and <code>A1</code> is the charger status line, so both are off limits.</div>
 
 <h2>The shared bus — four wires, all six sensors</h2>
 <svg viewBox="0 0 960 300" font-family="-apple-system,sans-serif">
@@ -79,9 +79,9 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <div class="sensor"><h3>Slot 1 — CE to <code>IO1</code></h3>
 <span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO1</span></div>
 
-<div class="sensor"><h3>Slot 2 — CE to <code>IO2</code></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO2</span>
-<div class="sub" style="margin-top:8px">If there is no IO2 pad on the header, stop and tell me — firmware remap, not a bodge.</div></div>
+<div class="sensor"><h3>Slot 2 — CE to <code>SW1</code></h3>
+<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → SW1</span>
+<div class="sub" style="margin-top:8px">Yes, <b>SW1</b> — the RAK13002 has no IO2 pin. The firmware is set to match.</div></div>
 
 <div class="sensor"><h3>Slot 3 — CE to <code>IO3</code></h3>
 <span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO3</span></div>
