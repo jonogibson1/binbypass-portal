@@ -22,6 +22,7 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <h1>Six-slot sensor wiring — TOF050C on unit 3</h1>
 <div class="sub">RAK19001 + RAK4631 + RAK13002 · VL6180X sensors · shared I²C, one enable line each</div>
 
+<div class="rule info"><b>Power pin is labelled <code>VCC</code> on the RAK13002</b> — there is no pin marked 3V3 on that header. VCC is the base board's regulated 3.3 V rail; that's the one. (The pair of GND pins beside it are the ground bus.)</div>
 <div class="rule">Golden rule, still: <b>read the silkscreen, never count pin positions.</b> Wire everything with power disconnected, check it twice, then power up.</div>
 
 <h2>Why each sensor needs its own enable wire</h2>
@@ -48,7 +49,7 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <rect x="20" y="30" width="200" height="230" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
 <text x="120" y="58" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">RAK13002</text>
 <text x="120" y="76" fill="#7ab7ff" text-anchor="middle" font-size="11">on unit 3</text>
-<rect x="150" y="95" width="62" height="24" rx="4" fill="#3a2020"/><text x="181" y="112" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">3V3</text>
+<rect x="150" y="95" width="62" height="24" rx="4" fill="#3a2020"/><text x="181" y="112" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">VCC</text>
 <rect x="150" y="130" width="62" height="24" rx="4" fill="#333"/><text x="181" y="147" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
 <rect x="150" y="165" width="62" height="24" rx="4" fill="#1e3a5f"/><text x="181" y="182" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA</text>
 <rect x="150" y="200" width="62" height="24" rx="4" fill="#2e2440"/><text x="181" y="217" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL</text>
@@ -59,7 +60,7 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <path d="M212 212 L900 212" stroke="#a78bfa" stroke-width="3"/>
 
 <g font-size="11" fill="#888">
-<text x="560" y="99" text-anchor="middle">every sensor's VIN</text>
+<text x="560" y="99" text-anchor="middle">every sensor's VIN (VCC = the 3.3 V rail)</text>
 <text x="560" y="134" text-anchor="middle">every sensor's GND</text>
 <text x="560" y="169" text-anchor="middle">every sensor's SDA</text>
 <text x="560" y="204" text-anchor="middle">every sensor's SCL</text>
@@ -77,28 +78,28 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <p>Every TOF050C gets <b>five wires</b>: four shared, one private. Wire them in slot order and label each CE wire as you go — a mislabelled CE is invisible until the data is wrong.</p>
 
 <div class="sensor"><h3>Slot 1 — CE to <code>IO1</code></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO1</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO1</span></div>
 
 <div class="sensor"><h3>Slot 2 — CE to <code>SW1</code></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → SW1</span>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → SW1</span>
 <div class="sub" style="margin-top:8px">Yes, <b>SW1</b> — the RAK13002 has no IO2 pin. The firmware is set to match.</div></div>
 
 <div class="sensor"><h3>Slot 3 — CE to <code>IO3</code></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO3</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO3</span></div>
 
 <div class="sensor"><h3>Slot 4 — CE to <code>IO4</code></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO4</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO4</span></div>
 
 <div class="sensor"><h3>Slot 5 — CE to <code>IO5</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO5</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO5</span></div>
 
 <div class="sensor"><h3>Slot 6 — CE to <code>IO6</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
-<span class="pill p3v3">VIN → 3V3</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO6</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO6</span></div>
 
 <h2>Before you power up</h2>
 <table>
 <tr><th>Check</th><th>Why</th></tr>
-<tr><td>No 3V3 touching GND anywhere</td><td>A short here kills the whole rig, not just a sensor</td></tr>
+<tr><td>No VCC touching GND anywhere</td><td>A short here kills the whole rig, not just a sensor</td></tr>
 <tr><td>SDA and SCL not swapped</td><td>Bus stays silent; every sensor reads as faulted</td></tr>
 <tr><td>Each CE on its own pin, none shared</td><td>Two sensors on one CE = address collision = both lost</td></tr>
 <tr><td>CE wires labelled 1–6 matching the cradle numbers</td><td>Otherwise the portal shows the wrong slot filling</td></tr>
