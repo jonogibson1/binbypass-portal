@@ -26,12 +26,12 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <div class="rule">Golden rule, still: <b>read the silkscreen, never count pin positions.</b> Wire everything with power disconnected, check it twice, then power up.</div>
 
 <h2>Why each sensor needs its own enable wire</h2>
-<p>Every VL6180X leaves the factory with the <b>same I²C address (0x29)</b>. Six of them on one bus would all answer at once and the bus would be useless. The fix is the <code>CE</code> (chip-enable / XSHUT) pin: the firmware holds all six sensors in reset, then wakes them <b>one at a time</b>, giving each a new address as it comes up — 0x30, 0x31, 0x32 and so on.</p>
-<p>That is why the four bus wires are shared by everyone, and the fifth wire is private to each sensor. Get a CE wire on the wrong pin and that slot reports the wrong container.</p>
+<p>Every VL6180X leaves the factory with the <b>same I²C address (0x29)</b>. Six of them on one bus would all answer at once and the bus would be useless. The fix is the pin your boards label <code>SHUT</code> (aka CE / XSHUT — same pin, different vendors' names): the firmware holds all six sensors in reset, then wakes them <b>one at a time</b>, giving each a new address as it comes up — 0x30, 0x31, 0x32 and so on.</p>
+<p>That is why the four bus wires are shared by everyone, and the fifth wire is private to each sensor. Get a SHUT wire on the wrong pin and that slot reports the wrong container.</p>
 
 <h2>The map — which sensor goes where</h2>
 <table>
-<tr><th>Slot</th><th>Sensor CE wire →</th><th>Firmware name</th><th>nRF52840 pin</th><th>Note</th></tr>
+<tr><th>Slot</th><th>Sensor SHUT wire →</th><th>Firmware name</th><th>nRF52840 pin</th><th>Note</th></tr>
 <tr><td><b>1</b></td><td><code>IO1</code></td><td>WB_IO1</td><td>P0.17</td><td>—</td></tr>
 <tr><td><b>2</b></td><td><code>SW1</code></td><td>WB_SW1</td><td>P1.01</td><td>not IO2 — see note</td></tr>
 <tr><td><b>3</b></td><td><code>IO3</code></td><td>WB_IO3</td><td>P0.21</td><td>—</td></tr>
@@ -75,34 +75,34 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 </svg>
 
 <h2>Each sensor, one at a time</h2>
-<p>Every TOF050C gets <b>five wires</b>: four shared, one private. Wire them in slot order and label each CE wire as you go — a mislabelled CE is invisible until the data is wrong.</p>
+<p>Every TOF050C gets <b>five wires</b>: four shared, one private. Wire them in slot order and label each CE wire as you go — a mislabelled SHUT wire is invisible until the data is wrong.</p>
 
-<div class="sensor"><h3>Slot 1 — CE to <code>IO1</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO1</span></div>
+<div class="sensor"><h3>Slot 1 — SHUT to <code>IO1</code></h3>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">SHUT → IO1</span></div>
 
-<div class="sensor"><h3>Slot 2 — CE to <code>SW1</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → SW1</span>
+<div class="sensor"><h3>Slot 2 — SHUT to <code>SW1</code></h3>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">SHUT → SW1</span>
 <div class="sub" style="margin-top:8px">Yes, <b>SW1</b> — the RAK13002 has no IO2 pin. The firmware is set to match.</div></div>
 
-<div class="sensor"><h3>Slot 3 — CE to <code>IO3</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO3</span></div>
+<div class="sensor"><h3>Slot 3 — SHUT to <code>IO3</code></h3>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">SHUT → IO3</span></div>
 
-<div class="sensor"><h3>Slot 4 — CE to <code>IO4</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO4</span></div>
+<div class="sensor"><h3>Slot 4 — SHUT to <code>IO4</code></h3>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">SHUT → IO4</span></div>
 
-<div class="sensor"><h3>Slot 5 — CE to <code>IO5</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO5</span></div>
+<div class="sensor"><h3>Slot 5 — SHUT to <code>IO5</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">SHUT → IO5</span></div>
 
-<div class="sensor"><h3>Slot 6 — CE to <code>IO6</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO6</span></div>
+<div class="sensor"><h3>Slot 6 — SHUT to <code>IO6</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">SHUT → IO6</span></div>
 
 <h2>Before you power up</h2>
 <table>
 <tr><th>Check</th><th>Why</th></tr>
 <tr><td>No VCC touching GND anywhere</td><td>A short here kills the whole rig, not just a sensor</td></tr>
 <tr><td>SDA1/SCL1 used (not the SDA2/SCL2 pair), and not swapped</td><td>Bus stays silent; every sensor reads as faulted</td></tr>
-<tr><td>Each CE on its own pin, none shared</td><td>Two sensors on one CE = address collision = both lost</td></tr>
-<tr><td>CE wires labelled 1–6 matching the cradle numbers</td><td>Otherwise the portal shows the wrong slot filling</td></tr>
+<tr><td>Each SHUT on its own pin, none shared</td><td>Two sensors on one CE = address collision = both lost</td></tr>
+<tr><td>SHUT wires labelled 1–6 matching the cradle numbers</td><td>Otherwise the portal shows the wrong slot filling</td></tr>
 <tr><td>Sensor faces the container, nothing in front of the window</td><td>VL6180X range is ~180 mm; a smear of glue reads as "occupied"</td></tr>
 </table>
 
