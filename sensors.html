@@ -44,35 +44,57 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 
 <div class="rule info"><b>Slot 2 goes to <code>SW1</code>, not IO2 — this is deliberate.</b> The RAK13002 has no IO2 pad at all; it breaks out <code>IO1, IO3, IO4, IO5, IO6, IO7</code> (confirmed in RAK's datasheet). The firmware originally asked for <code>WB_IO2</code>, which does not exist on this module, so slot 2 could never have worked. It now uses <code>WB_SW1</code> — the free GPIO on that header, printed on the silkscreen as <b>SW1</b>. <code>A0</code> is battery sense and <code>A1</code> is the charger status line, so both are off limits.</div>
 
-<h2>The shared bus — four wires, all six sensors</h2>
-<svg viewBox="0 0 960 300" font-family="-apple-system,sans-serif">
-<rect x="20" y="30" width="200" height="230" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
-<text x="120" y="58" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">RAK13002</text>
-<text x="120" y="76" fill="#7ab7ff" text-anchor="middle" font-size="11">on unit 3</text>
-<rect x="150" y="95" width="62" height="24" rx="4" fill="#3a2020"/><text x="181" y="112" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">VCC</text>
-<rect x="150" y="130" width="62" height="24" rx="4" fill="#333"/><text x="181" y="147" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
-<rect x="150" y="165" width="62" height="24" rx="4" fill="#1e3a5f"/><text x="181" y="182" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA1</text>
-<rect x="150" y="200" width="62" height="24" rx="4" fill="#2e2440"/><text x="181" y="217" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL1</text>
+<h2>The wiring — one sensor shown, repeat ×6</h2>
+<svg viewBox="0 0 960 560" font-family="-apple-system,sans-serif">
+<!-- RAK13002 -->
+<rect x="20" y="30" width="250" height="500" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
+<text x="145" y="60" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">RAK13002 header</text>
+<text x="145" y="78" fill="#7ab7ff" text-anchor="middle" font-size="11">labels as printed on the silkscreen</text>
 
-<path d="M212 107 L900 107" stroke="#f87171" stroke-width="3"/>
-<path d="M212 142 L900 142" stroke="#ccc" stroke-width="3"/>
-<path d="M212 177 L900 177" stroke="#60a5fa" stroke-width="3"/>
-<path d="M212 212 L900 212" stroke="#a78bfa" stroke-width="3"/>
+<rect x="195" y="95" width="62" height="26" rx="4" fill="#3a2020"/><text x="226" y="113" fill="#f87171" text-anchor="middle" font-size="13" font-weight="700">VCC</text>
+<rect x="195" y="130" width="62" height="26" rx="4" fill="#333"/><text x="226" y="148" fill="#ccc" text-anchor="middle" font-size="13" font-weight="700">GND</text>
+<rect x="195" y="165" width="62" height="26" rx="4" fill="#1e3a5f"/><text x="226" y="183" fill="#60a5fa" text-anchor="middle" font-size="13" font-weight="700">SDA1</text>
+<rect x="195" y="200" width="62" height="26" rx="4" fill="#2e2440"/><text x="226" y="218" fill="#a78bfa" text-anchor="middle" font-size="13" font-weight="700">SCL1</text>
 
-<g font-size="11" fill="#888">
-<text x="560" y="99" text-anchor="middle">every sensor's VIN (VCC = the 3.3 V rail)</text>
-<text x="560" y="134" text-anchor="middle">every sensor's GND</text>
-<text x="560" y="169" text-anchor="middle">every sensor's SDA (bus 1, not SDA2)</text>
-<text x="560" y="204" text-anchor="middle">every sensor's SCL (bus 1, not SCL2)</text>
-</g>
-<g>
-<circle cx="330" cy="107" r="5" fill="#f87171"/><circle cx="450" cy="107" r="5" fill="#f87171"/><circle cx="570" cy="107" r="5" fill="#f87171"/><circle cx="690" cy="107" r="5" fill="#f87171"/><circle cx="810" cy="107" r="5" fill="#f87171"/>
-<circle cx="330" cy="142" r="5" fill="#ccc"/><circle cx="450" cy="142" r="5" fill="#ccc"/><circle cx="570" cy="142" r="5" fill="#ccc"/><circle cx="690" cy="142" r="5" fill="#ccc"/><circle cx="810" cy="142" r="5" fill="#ccc"/>
-<circle cx="330" cy="177" r="5" fill="#60a5fa"/><circle cx="450" cy="177" r="5" fill="#60a5fa"/><circle cx="570" cy="177" r="5" fill="#60a5fa"/><circle cx="690" cy="177" r="5" fill="#60a5fa"/><circle cx="810" cy="177" r="5" fill="#60a5fa"/>
-<circle cx="330" cy="212" r="5" fill="#a78bfa"/><circle cx="450" cy="212" r="5" fill="#a78bfa"/><circle cx="570" cy="212" r="5" fill="#a78bfa"/><circle cx="690" cy="212" r="5" fill="#a78bfa"/><circle cx="810" cy="212" r="5" fill="#a78bfa"/>
-</g>
-<text x="560" y="255" fill="#999" text-anchor="middle" font-size="12">daisy-chaining is fine — every sensor taps the same four lines</text>
+<text x="145" y="262" fill="#888" text-anchor="middle" font-size="11">one SHUT line per slot ↓</text>
+<rect x="195" y="275" width="62" height="24" rx="4" fill="#3a2e1c"/><text x="226" y="292" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">IO1</text>
+<rect x="195" y="306" width="62" height="24" rx="4" fill="#3a2e1c"/><text x="226" y="323" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">SW1</text>
+<rect x="195" y="337" width="62" height="24" rx="4" fill="#3a2e1c"/><text x="226" y="354" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">IO3</text>
+<rect x="195" y="368" width="62" height="24" rx="4" fill="#3a2e1c"/><text x="226" y="385" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">IO4</text>
+<rect x="195" y="399" width="62" height="24" rx="4" fill="#3a2e1c"/><text x="226" y="416" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">IO5</text>
+<rect x="195" y="430" width="62" height="24" rx="4" fill="#3a2e1c"/><text x="226" y="447" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">IO6</text>
+<text x="145" y="480" fill="#888" text-anchor="middle" font-size="11">slot 1→IO1 · slot 2→SW1</text>
+<text x="145" y="496" fill="#888" text-anchor="middle" font-size="11">slot 3→IO3 · slot 4→IO4</text>
+<text x="145" y="512" fill="#888" text-anchor="middle" font-size="11">slot 5→IO5 · slot 6→IO6</text>
+
+<!-- Sensor -->
+<rect x="620" y="60" width="310" height="330" rx="12" fill="#20362a" stroke="#4ade80"/>
+<text x="775" y="90" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">TOF050C sensor (slot n)</text>
+<text x="775" y="108" fill="#9c9" text-anchor="middle" font-size="11">its pins, its labels</text>
+
+<rect x="625" y="125" width="66" height="26" rx="4" fill="#3a2020"/><text x="658" y="143" fill="#f87171" text-anchor="middle" font-size="13" font-weight="700">VIN</text>
+<rect x="625" y="160" width="66" height="26" rx="4" fill="#333"/><text x="658" y="178" fill="#ccc" text-anchor="middle" font-size="13" font-weight="700">GND</text>
+<rect x="625" y="195" width="66" height="26" rx="4" fill="#1e3a5f"/><text x="658" y="213" fill="#60a5fa" text-anchor="middle" font-size="13" font-weight="700">SDA</text>
+<rect x="625" y="230" width="66" height="26" rx="4" fill="#2e2440"/><text x="658" y="248" fill="#a78bfa" text-anchor="middle" font-size="13" font-weight="700">SCL</text>
+<rect x="625" y="265" width="66" height="26" rx="4" fill="#3a2e1c"/><text x="658" y="283" fill="#fb923c" text-anchor="middle" font-size="13" font-weight="700">SHUT</text>
+<rect x="625" y="300" width="66" height="26" rx="4" fill="#26262e"/><text x="658" y="318" fill="#777" text-anchor="middle" font-size="13" font-weight="700">INT</text>
+<text x="720" y="318" fill="#777" font-size="12">← leave unconnected</text>
+<text x="775" y="365" fill="#9c9" text-anchor="middle" font-size="11">sensor window faces the container, ~180 mm max range</text>
+
+<!-- wires -->
+<path d="M257 108 L625 138" stroke="#f87171" stroke-width="3.5" fill="none"/>
+<path d="M257 143 L625 173" stroke="#ccc" stroke-width="3.5" fill="none"/>
+<path d="M257 178 L625 208" stroke="#60a5fa" stroke-width="3.5" fill="none"/>
+<path d="M257 213 L625 243" stroke="#a78bfa" stroke-width="3.5" fill="none"/>
+<path d="M257 287 L625 278" stroke="#fb923c" stroke-width="3.5" fill="none" stroke-dasharray="0"/>
+<text x="440" y="100" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">shared by all 6</text>
+<text x="440" y="265" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">private — this slot only (IO1 shown)</text>
+
+<!-- shared tap note -->
+<circle cx="380" cy="119" r="5" fill="#f87171"/><circle cx="380" cy="152" r="5" fill="#ccc"/><circle cx="380" cy="185" r="5" fill="#60a5fa"/><circle cx="380" cy="218" r="5" fill="#a78bfa"/>
+<text x="380" y="245" fill="#888" text-anchor="middle" font-size="11">dots = the other five sensors tap the same four lines</text>
 </svg>
+<div class="sub" style="margin:6px 0 18px">Every sensor: <b>VIN→VCC · GND→GND · SDA→SDA1 · SCL→SCL1 · SHUT→its IO pin · INT→nothing.</b> Six sensors share the first four wires; each SHUT is private.</div>
 
 <h2>Each sensor, one at a time</h2>
 <p>Every TOF050C gets <b>five wires</b>: four shared, one private. Wire them in slot order and label each CE wire as you go — a mislabelled SHUT wire is invisible until the data is wrong.</p>
