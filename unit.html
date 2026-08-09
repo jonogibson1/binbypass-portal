@@ -1,0 +1,142 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass — unit detail</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:18px;max-width:820px;margin:auto}
+a{color:#7ab7ff}
+h1{font-size:20px;margin:4px 0}
+.meta{color:#999;font-size:12px}
+.card{background:#232329;border-radius:14px;padding:16px;margin:12px 0}
+.slots{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.s{width:52px;height:52px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;background:#333}
+.s small{font-size:9px;font-weight:400;color:#bbb}
+.s1{background:#1d3a52}.s0{background:#20362a}.s255{background:#3a2020;color:#c66}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.kpi{background:#232329;border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:22px;color:#4ade80}
+.kpi span{font-size:11px;color:#999}
+#map{height:240px;border-radius:12px;margin:8px 0;background:#222}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:5px 8px;text-align:left;border-bottom:1px solid #333;white-space:nowrap}
+th{color:#999;font-size:11px;text-transform:uppercase}
+svg{width:100%;height:auto;display:block}
+.wrap{overflow-x:auto}
+</style></head><body>
+<div class="meta"><a href="index.html">← fleet</a></div>
+<h1 id="title">Unit …</h1>
+<div class="meta" id="sub">loading…</div>
+
+<div class="card"><b>Slots now</b><div class="slots" id="slots"></div>
+<div class="meta" id="slotmeta"></div></div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="card"><b>Location</b><div id="map"></div>
+<div class="meta" id="locmeta">no fix yet</div></div>
+
+<div class="card"><b>Occupancy over the last 24 h</b>
+<svg viewBox="0 0 800 180" id="occ"></svg>
+<div class="meta">slots occupied across the unit, hour by hour</div></div>
+
+<div class="card"><b>Battery &amp; signal</b>
+<svg viewBox="0 0 800 160" id="health"></svg>
+<div class="meta"><span style="color:#4ade80">■</span> battery &nbsp; <span style="color:#fbbf24">■</span> signal (dBm)</div></div>
+
+<div class="card"><b>Recent packets</b><div class="wrap"><table id="pkts"></table></div></div>
+<div class="card"><b>Slot events</b><div class="wrap"><table id="events"></table></div></div>
+
+<script>
+const SUPABASE_URL="https://kyjrqpibtncvhxwcaovx.supabase.co";
+const KEY="sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc";
+const unit=new URLSearchParams(location.search).get("unit")||"3";
+async function sb(p){const r=await fetch(`${SUPABASE_URL}/rest/v1/${p}`,{headers:{apikey:KEY,Authorization:`Bearer ${KEY}`}});return r.json();}
+function ago(iso){const s=Math.max(0,(Date.now()-Date.parse(iso))/1000);if(s<60)return Math.round(s)+"s ago";if(s<3600)return Math.round(s/60)+" min ago";if(s<86400)return (s/3600).toFixed(1)+" h ago";return (s/86400).toFixed(1)+" days ago";}
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;}
+function txt(p,x,y,s,anc){const e=el(p,"text",{x,y,"text-anchor":anc||"middle",fill:"#888","font-size":10});e.textContent=s;return e;}
+
+let map, marker;
+async function tick(){
+  document.getElementById("title").textContent="Unit "+unit;
+  const u=(await sb(`units?unit_id=eq.${unit}&select=*`))[0];
+  const pkts=await sb(`packets?unit_id=eq.${unit}&select=*&order=id.desc&limit=200`);
+  if(!u||!pkts.length){document.getElementById("sub").textContent="no data for this unit yet";return;}
+  const latest=pkts[0];
+  const slots=JSON.parse(latest.slots);
+  document.getElementById("sub").innerHTML=`updated ${ago(latest.received_at)} · via ${latest.src} · ${latest.vbat_mv?latest.vbat_mv+" mV":"USB"} · ${latest.rssi?latest.rssi+" dBm":""}`;
+
+  // slots now
+  const names=["1","2","3","4","5","6"];
+  document.getElementById("slots").innerHTML=slots.map((v,i)=>
+    `<div class="s s${v}">${v===255?"✕":v}<small>slot ${names[i]}</small></div>`).join("");
+  const occ=slots.filter(v=>v===1).length, flt=slots.filter(v=>v===255).length;
+  document.getElementById("slotmeta").textContent=`${occ} occupied · ${flt} fault/unwired · ${6-occ-flt} empty`;
+
+  // stats from slot_events
+  const ev=await sb(`slot_events?unit_id=eq.${unit}&select=slot,state,changed_at&order=changed_at.asc&limit=2000`);
+  const weekAgo=Date.now()-7*864e5; let dep7=0,moved=0,dwellSum=0,dwellN=0; const open={};
+  for(const e of ev){const t=Date.parse(e.changed_at);
+    if(e.state===1){open[e.slot]=t;if(t>=weekAgo)dep7++;}
+    else if(e.state===0&&open[e.slot]!=null){moved++;dwellSum+=t-open[e.slot];dwellN++;delete open[e.slot];}
+    else if(e.state===255)delete open[e.slot];}
+  const dh=dwellN?dwellSum/dwellN/36e5:null;
+  const dwell=dh==null?"—":dh<1?Math.round(dh*60)+" min":dh.toFixed(1)+" h";
+  document.getElementById("kpis").innerHTML=
+    `<div class="kpi"><b>${occ}/6</b><span>containers now</span></div>`+
+    `<div class="kpi"><b>${dep7}</b><span>deposits, 7 days</span></div>`+
+    `<div class="kpi"><b>${dwell}</b><span>avg dwell</span></div>`+
+    `<div class="kpi"><b>${moved}</b><span>total moved</span></div>`;
+
+  // map
+  if(u.lat!=null){
+    if(!map){map=L.map("map",{scrollWheelZoom:false}).setView([u.lat,u.lon],17);
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri"}).addTo(map);}
+    if(marker)marker.setLatLng([u.lat,u.lon]);else marker=L.marker([u.lat,u.lon]).addTo(map);
+    document.getElementById("locmeta").innerHTML=`<a href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank">${(+u.lat).toFixed(5)}, ${(+u.lon).toFixed(5)}</a> · ±${u.acc_m??"?"} m · fixed ${u.located_at?ago(u.located_at):"—"}`;
+  } else document.getElementById("locmeta").textContent="no GPS fix yet — send a location request from the ops console";
+
+  // occupancy over 24h (count occupied slots per packet, bucket by hour)
+  const dayAgo=Date.now()-864e5;
+  const recent=pkts.filter(p=>Date.parse(p.received_at)>=dayAgo).reverse();
+  drawOcc(recent);
+  drawHealth(recent);
+
+  // packet table
+  let ph='<tr><th>time</th><th>src</th><th>slots</th><th>mV</th><th>dBm</th></tr>';
+  for(const p of pkts.slice(0,15))ph+=`<tr><td>${ago(p.received_at)}</td><td>${p.src}</td><td>${p.slots}</td><td>${p.vbat_mv||"—"}</td><td>${p.rssi||"—"}</td></tr>`;
+  document.getElementById("pkts").innerHTML=ph;
+
+  let eh='<tr><th>time</th><th>slot</th><th>became</th></tr>';
+  for(const e of ev.slice(-15).reverse())eh+=`<tr><td>${ago(e.changed_at)}</td><td>${e.slot}</td><td>${e.state===1?"OCCUPIED":e.state===0?"empty":"fault"}</td></tr>`;
+  document.getElementById("events").innerHTML=eh;
+}
+function drawOcc(pkts){
+  const s=document.getElementById("occ");s.innerHTML="";
+  if(pkts.length<2){txt(s,400,90,"not enough data in the last 24 h");return;}
+  const W=800,H=180,P={l:30,r:10,t:12,b:22};
+  el(s,"line",{x1:P.l,y1:H-P.b,x2:W-P.r,y2:H-P.b,stroke:"#3a3a42"});
+  for(let g=0;g<=6;g+=2){const y=H-P.b-(H-P.t-P.b)*g/6;el(s,"line",{x1:P.l,y1:y,x2:W-P.r,y2:y,stroke:"#26262c"});txt(s,P.l-6,y+3,g,"end");}
+  const n=pkts.length,X=i=>P.l+(W-P.l-P.r)*i/(n-1),Y=v=>H-P.b-(H-P.t-P.b)*v/6;
+  const path=pkts.map((p,i)=>{const o=JSON.parse(p.slots).filter(v=>v===1).length;return (i?"L":"M")+X(i).toFixed(1)+" "+Y(o).toFixed(1);}).join(" ");
+  el(s,"path",{d:path+`L${X(n-1)} ${H-P.b}L${X(0)} ${H-P.b}Z`,fill:"#4ade80",opacity:.13});
+  el(s,"path",{d:path,fill:"none",stroke:"#4ade80","stroke-width":2});
+  txt(s,X(0),H-8,new Date(pkts[0].received_at).getHours()+":00","start");
+  txt(s,X(n-1),H-8,new Date(pkts[n-1].received_at).getHours()+":00","end");
+}
+function drawHealth(pkts){
+  const s=document.getElementById("health");s.innerHTML="";
+  const have=pkts.filter(p=>p.vbat_mv||p.rssi);
+  if(have.length<2){txt(s,400,80,"no battery/signal history yet");return;}
+  const W=800,H=160,P={l:36,r:10,t:12,b:22},n=pkts.length;
+  const X=i=>P.l+(W-P.l-P.r)*i/(n-1);
+  const vb=pkts.map(p=>p.vbat_mv||0),mx=Math.max(...vb,4200),mn=3000;
+  const Yb=v=>H-P.b-(H-P.t-P.b)*(Math.max(mn,v)-mn)/(mx-mn);
+  const rs=pkts.map(p=>p.rssi||-120);
+  const Yr=v=>H-P.b-(H-P.t-P.b)*(Math.max(-120,v)+120)/70;
+  el(s,"line",{x1:P.l,y1:H-P.b,x2:W-P.r,y2:H-P.b,stroke:"#3a3a42"});
+  if(vb.some(v=>v>0))el(s,"path",{d:vb.map((v,i)=>(i?"L":"M")+X(i)+" "+Yb(v)).join(" "),fill:"none",stroke:"#4ade80","stroke-width":2});
+  if(rs.some(v=>v>-120))el(s,"path",{d:rs.map((v,i)=>(i?"L":"M")+X(i)+" "+Yr(v)).join(" "),fill:"none",stroke:"#fbbf24","stroke-width":2});
+}
+setInterval(tick,5000);tick();
+</script></body></html>
