@@ -51,8 +51,8 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <text x="120" y="76" fill="#7ab7ff" text-anchor="middle" font-size="11">on unit 3</text>
 <rect x="150" y="95" width="62" height="24" rx="4" fill="#3a2020"/><text x="181" y="112" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">VCC</text>
 <rect x="150" y="130" width="62" height="24" rx="4" fill="#333"/><text x="181" y="147" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
-<rect x="150" y="165" width="62" height="24" rx="4" fill="#1e3a5f"/><text x="181" y="182" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA</text>
-<rect x="150" y="200" width="62" height="24" rx="4" fill="#2e2440"/><text x="181" y="217" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL</text>
+<rect x="150" y="165" width="62" height="24" rx="4" fill="#1e3a5f"/><text x="181" y="182" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA1</text>
+<rect x="150" y="200" width="62" height="24" rx="4" fill="#2e2440"/><text x="181" y="217" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL1</text>
 
 <path d="M212 107 L900 107" stroke="#f87171" stroke-width="3"/>
 <path d="M212 142 L900 142" stroke="#ccc" stroke-width="3"/>
@@ -62,8 +62,8 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <g font-size="11" fill="#888">
 <text x="560" y="99" text-anchor="middle">every sensor's VIN (VCC = the 3.3 V rail)</text>
 <text x="560" y="134" text-anchor="middle">every sensor's GND</text>
-<text x="560" y="169" text-anchor="middle">every sensor's SDA</text>
-<text x="560" y="204" text-anchor="middle">every sensor's SCL</text>
+<text x="560" y="169" text-anchor="middle">every sensor's SDA (bus 1, not SDA2)</text>
+<text x="560" y="204" text-anchor="middle">every sensor's SCL (bus 1, not SCL2)</text>
 </g>
 <g>
 <circle cx="330" cy="107" r="5" fill="#f87171"/><circle cx="450" cy="107" r="5" fill="#f87171"/><circle cx="570" cy="107" r="5" fill="#f87171"/><circle cx="690" cy="107" r="5" fill="#f87171"/><circle cx="810" cy="107" r="5" fill="#f87171"/>
@@ -78,29 +78,29 @@ svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;m
 <p>Every TOF050C gets <b>five wires</b>: four shared, one private. Wire them in slot order and label each CE wire as you go — a mislabelled CE is invisible until the data is wrong.</p>
 
 <div class="sensor"><h3>Slot 1 — CE to <code>IO1</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO1</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO1</span></div>
 
 <div class="sensor"><h3>Slot 2 — CE to <code>SW1</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → SW1</span>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → SW1</span>
 <div class="sub" style="margin-top:8px">Yes, <b>SW1</b> — the RAK13002 has no IO2 pin. The firmware is set to match.</div></div>
 
 <div class="sensor"><h3>Slot 3 — CE to <code>IO3</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO3</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO3</span></div>
 
 <div class="sensor"><h3>Slot 4 — CE to <code>IO4</code></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO4</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO4</span></div>
 
 <div class="sensor"><h3>Slot 5 — CE to <code>IO5</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO5</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO5</span></div>
 
 <div class="sensor"><h3>Slot 6 — CE to <code>IO6</code> <span class="sub">(NFC pin — needs the firmware flag)</span></h3>
-<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA</span><span class="pill pscl">SCL → SCL</span><span class="pill pce">CE → IO6</span></div>
+<span class="pill p3v3">VIN → VCC</span><span class="pill pgnd">GND → GND</span><span class="pill psda">SDA → SDA1</span><span class="pill pscl">SCL → SCL1</span><span class="pill pce">CE → IO6</span></div>
 
 <h2>Before you power up</h2>
 <table>
 <tr><th>Check</th><th>Why</th></tr>
 <tr><td>No VCC touching GND anywhere</td><td>A short here kills the whole rig, not just a sensor</td></tr>
-<tr><td>SDA and SCL not swapped</td><td>Bus stays silent; every sensor reads as faulted</td></tr>
+<tr><td>SDA1/SCL1 used (not the SDA2/SCL2 pair), and not swapped</td><td>Bus stays silent; every sensor reads as faulted</td></tr>
 <tr><td>Each CE on its own pin, none shared</td><td>Two sensors on one CE = address collision = both lost</td></tr>
 <tr><td>CE wires labelled 1–6 matching the cradle numbers</td><td>Otherwise the portal shows the wrong slot filling</td></tr>
 <tr><td>Sensor faces the container, nothing in front of the window</td><td>VL6180X range is ~180 mm; a smear of glue reads as "occupied"</td></tr>
