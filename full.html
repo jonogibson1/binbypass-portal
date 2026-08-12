@@ -1,0 +1,198 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass — full unit wiring</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:1080px;margin:auto;line-height:1.55}
+h1{font-size:22px;margin-bottom:2px}h2{font-size:17px;margin:26px 0 6px}
+.sub{color:#999;font-size:13px}
+.rule{background:#1c2b22;border:1px solid #166534;border-radius:12px;padding:11px 15px;font-size:13px;margin:12px 0}
+.warn{background:#2b1c1c;border-color:#7f1d1d}
+.info{background:#1c2331;border-color:#1e40af}
+svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;margin:10px 0}
+code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+td,th{padding:6px 9px;text-align:left;border-bottom:1px solid #333}
+th{color:#999;font-size:11px;text-transform:uppercase}
+.leg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:#bbb;margin:8px 0}
+.leg span{display:flex;align-items:center;gap:5px}
+.sw{width:22px;height:4px;border-radius:2px;display:inline-block}
+</style></head><body>
+
+<h1>Bin Bypass — full unit wiring</h1>
+<div class="sub">Fence MVP (mark 3): RAK19001 + RAK4631 + RAK13002 · 6× TOF050C · SIM7080G · solar + 18650</div>
+
+<div class="rule">Golden rule: <b>read the silkscreen, never count pin positions.</b> Build with power disconnected, current-limit the first power-up to ~100 mA, and watch the meter before trusting anything.</div>
+
+<div class="leg">
+  <span><i class="sw" style="background:#f87171"></i> power / VCC 3V3</span>
+  <span><i class="sw" style="background:#ccc"></i> ground</span>
+  <span><i class="sw" style="background:#60a5fa"></i> SDA1</span>
+  <span><i class="sw" style="background:#a78bfa"></i> SCL1</span>
+  <span><i class="sw" style="background:#fb923c"></i> SHUT (one per sensor)</span>
+  <span><i class="sw" style="background:#4ade80"></i> UART / signal</span>
+  <span><i class="sw" style="background:#eab308"></i> solar / battery power</span>
+</div>
+
+<!-- ============ MAIN DIAGRAM ============ -->
+<svg viewBox="0 0 1080 900" font-family="-apple-system,sans-serif">
+<defs>
+  <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker>
+</defs>
+
+<!-- ===== POWER CHAIN (top) ===== -->
+<text x="20" y="26" fill="#eab308" font-size="13" font-weight="700">POWER — solar keeps the cell charged; the cell runs everything</text>
+
+<rect x="20" y="38" width="140" height="66" rx="9" fill="#2e2a1c" stroke="#eab308"/>
+<text x="90" y="64" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">Solar panel</text>
+<text x="90" y="82" fill="#ca8" text-anchor="middle" font-size="10">6 V ~150 mA (0.9 W)</text>
+<text x="90" y="96" fill="#ca8" text-anchor="middle" font-size="10">80×80, on the cap</text>
+
+<line x1="160" y1="71" x2="215" y2="71" stroke="#eab308" stroke-width="3.5" marker-end="url(#ar)"/>
+<text x="187" y="63" fill="#ca8" text-anchor="middle" font-size="9">PV+ / PV−</text>
+
+<rect x="215" y="38" width="150" height="66" rx="9" fill="#2e2a1c" stroke="#eab308"/>
+<text x="290" y="60" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">Solar charger</text>
+<text x="290" y="77" fill="#ca8" text-anchor="middle" font-size="10">bench: CN3791 (Li-ion)</text>
+<text x="290" y="91" fill="#ca8" text-anchor="middle" font-size="10">prod: CN3058E (LiFePO4)</text>
+
+<line x1="365" y1="71" x2="420" y2="71" stroke="#eab308" stroke-width="3.5" marker-end="url(#ar)"/>
+<text x="392" y="63" fill="#ca8" text-anchor="middle" font-size="9">BAT+ / BAT−</text>
+
+<rect x="420" y="38" width="160" height="66" rx="9" fill="#20362a" stroke="#4ade80"/>
+<text x="500" y="60" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">18650 cell</text>
+<text x="500" y="77" fill="#9c9" text-anchor="middle" font-size="10">bench: protected Li-ion 3.7 V</text>
+<text x="500" y="91" fill="#9c9" text-anchor="middle" font-size="10">prod: LiFePO4 ~1500 mAh</text>
+
+<!-- NTC callout -->
+<rect x="215" y="120" width="150" height="40" rx="8" fill="#26262e" stroke="#7f1d1d"/>
+<text x="290" y="138" fill="#edc" text-anchor="middle" font-size="10" font-weight="700">NTC on charger TEMP</text>
+<text x="290" y="152" fill="#c99" text-anchor="middle" font-size="9">inhibit charge when cold (issue #20)</text>
+<line x1="290" y1="120" x2="290" y2="104" stroke="#7f1d1d" stroke-width="2" stroke-dasharray="3 3"/>
+
+<!-- battery to RAK -->
+<line x1="500" y1="104" x2="500" y2="140" stroke="#eab308" stroke-width="3.5"/>
+<line x1="500" y1="140" x2="300" y2="140" stroke="#eab308" stroke-width="3.5"/>
+<line x1="300" y1="140" x2="300" y2="205" stroke="#eab308" stroke-width="3.5" marker-end="url(#ar)"/>
+<text x="300" y="176" fill="#ca8" text-anchor="middle" font-size="9">JST → RAK19001</text>
+<text x="300" y="188" fill="#ca8" text-anchor="middle" font-size="9">battery plug</text>
+<!-- battery to modem -->
+<line x1="500" y1="140" x2="880" y2="140" stroke="#eab308" stroke-width="3.5"/>
+<line x1="880" y1="140" x2="880" y2="205" stroke="#eab308" stroke-width="3.5" marker-end="url(#ar)"/>
+<text x="880" y="176" fill="#ca8" text-anchor="middle" font-size="9">→ modem battery plug</text>
+<text x="880" y="188" fill="#ca8" text-anchor="middle" font-size="9">(switch = ON)</text>
+
+<!-- ===== RAK STACK (centre-left) ===== -->
+<rect x="120" y="205" width="360" height="330" rx="12" fill="#1d2b3a" stroke="#3b82f6"/>
+<text x="300" y="230" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">RAK19001 base + RAK4631 + RAK13002</text>
+<text x="300" y="247" fill="#7ab7ff" text-anchor="middle" font-size="11">the brain — nRF52840 + SX1262 LoRa + BLE</text>
+
+<!-- 13002 header pins (bus) on left -->
+<rect x="140" y="270" width="60" height="22" rx="4" fill="#3a2020"/><text x="170" y="286" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">VCC</text>
+<rect x="140" y="298" width="60" height="22" rx="4" fill="#333"/><text x="170" y="314" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<rect x="140" y="326" width="60" height="22" rx="4" fill="#1e3a5f"/><text x="170" y="342" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA1</text>
+<rect x="140" y="354" width="60" height="22" rx="4" fill="#2e2440"/><text x="170" y="370" fill="#a78bfa" text-anchor="middle" font-size="12" font-weight="700">SCL1</text>
+
+<!-- SHUT pins -->
+<rect x="140" y="392" width="52" height="20" rx="4" fill="#3a2e1c"/><text x="166" y="407" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">IO1</text>
+<rect x="140" y="416" width="52" height="20" rx="4" fill="#3a2e1c"/><text x="166" y="431" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">SW1</text>
+<rect x="140" y="440" width="52" height="20" rx="4" fill="#3a2e1c"/><text x="166" y="455" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">IO3</text>
+<rect x="140" y="464" width="52" height="20" rx="4" fill="#3a2e1c"/><text x="166" y="479" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">IO4</text>
+<rect x="140" y="488" width="52" height="20" rx="4" fill="#3a1c1c" stroke="#7f1d1d"/><text x="166" y="503" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">IO5</text>
+<rect x="140" y="512" width="52" height="20" rx="4" fill="#3a1c1c" stroke="#7f1d1d"/><text x="166" y="527" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">IO6</text>
+<text x="205" y="503" fill="#c99" font-size="9">NFC</text>
+<text x="205" y="527" fill="#c99" font-size="9">NFC</text>
+
+<!-- UART pins to modem on right -->
+<rect x="400" y="300" width="60" height="22" rx="4" fill="#20362a"/><text x="430" y="316" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">TXD0</text>
+<rect x="400" y="328" width="60" height="22" rx="4" fill="#20362a"/><text x="430" y="344" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">RXD0</text>
+<rect x="400" y="356" width="60" height="22" rx="4" fill="#333"/><text x="430" y="372" fill="#ccc" text-anchor="middle" font-size="11" font-weight="700">GND</text>
+
+<!-- ===== SENSORS (right column) ===== -->
+<text x="560" y="230" fill="#4ade80" font-size="12" font-weight="700">6 × TOF050C — 4 shared wires + 1 private SHUT each</text>
+
+<!-- shared bus rails running down right side -->
+<path d="M200 281 H540 V860" stroke="#f87171" stroke-width="2.5" fill="none"/>
+<path d="M200 309 H528 V860" stroke="#ccc" stroke-width="2.5" fill="none"/>
+<path d="M200 337 H516 V860" stroke="#60a5fa" stroke-width="2.5" fill="none"/>
+<path d="M200 365 H504 V860" stroke="#a78bfa" stroke-width="2.5" fill="none"/>
+
+<!-- six sensor blocks -->
+<g font-size="10">
+<!-- helper: each sensor -->
+<!-- Slot 1 -->
+<rect x="600" y="250" width="200" height="42" rx="7" fill="#20362a" stroke="#4ade80"/>
+<text x="610" y="266" fill="#eee" font-size="11" font-weight="700">Slot 1</text>
+<text x="610" y="282" fill="#9c9">VIN·GND·SDA·SCL + SHUT→IO1</text>
+<line x1="192" y1="402" x2="600" y2="271" stroke="#fb923c" stroke-width="2" fill="none"/>
+
+<rect x="600" y="298" width="200" height="42" rx="7" fill="#20362a" stroke="#4ade80"/>
+<text x="610" y="314" fill="#eee" font-size="11" font-weight="700">Slot 2</text>
+<text x="610" y="330" fill="#9c9">VIN·GND·SDA·SCL + SHUT→SW1</text>
+<line x1="192" y1="426" x2="600" y2="319" stroke="#fb923c" stroke-width="2" fill="none"/>
+
+<rect x="600" y="346" width="200" height="42" rx="7" fill="#20362a" stroke="#4ade80"/>
+<text x="610" y="362" fill="#eee" font-size="11" font-weight="700">Slot 3</text>
+<text x="610" y="378" fill="#9c9">VIN·GND·SDA·SCL + SHUT→IO3</text>
+<line x1="192" y1="450" x2="600" y2="367" stroke="#fb923c" stroke-width="2" fill="none"/>
+
+<rect x="600" y="394" width="200" height="42" rx="7" fill="#20362a" stroke="#4ade80"/>
+<text x="610" y="410" fill="#eee" font-size="11" font-weight="700">Slot 4</text>
+<text x="610" y="426" fill="#9c9">VIN·GND·SDA·SCL + SHUT→IO4</text>
+<line x1="192" y1="474" x2="600" y2="415" stroke="#fb923c" stroke-width="2" fill="none"/>
+
+<rect x="600" y="442" width="200" height="42" rx="7" fill="#2b1c1c" stroke="#f87171"/>
+<text x="610" y="458" fill="#eee" font-size="11" font-weight="700">Slot 5</text>
+<text x="610" y="474" fill="#edc">VIN·GND·SDA·SCL + SHUT→IO5</text>
+<line x1="192" y1="498" x2="600" y2="463" stroke="#f87171" stroke-width="2" fill="none"/>
+
+<rect x="600" y="490" width="200" height="42" rx="7" fill="#2b1c1c" stroke="#f87171"/>
+<text x="610" y="506" fill="#eee" font-size="11" font-weight="700">Slot 6</text>
+<text x="610" y="522" fill="#edc">VIN·GND·SDA·SCL + SHUT→IO6</text>
+<line x1="192" y1="522" x2="600" y2="511" stroke="#f87171" stroke-width="2" fill="none"/>
+</g>
+<text x="810" y="470" fill="#c99" font-size="10">← NFC pins,</text>
+<text x="810" y="484" fill="#c99" font-size="10">need the flag</text>
+
+<!-- ===== MODEM (right, below power) ===== -->
+<rect x="770" y="205" width="290" height="200" rx="12" fill="#2b2436" stroke="#a78bfa"/>
+<text x="915" y="230" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">Waveshare Pico-SIM7080G</text>
+<text x="915" y="247" fill="#c4b5fd" text-anchor="middle" font-size="10">Cat-M1 cellular + GNSS · SIM in · switch ON</text>
+<rect x="790" y="300" width="56" height="22" rx="4" fill="#20362a"/><text x="818" y="316" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">RXD</text>
+<rect x="790" y="328" width="56" height="22" rx="4" fill="#20362a"/><text x="818" y="344" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">TXD</text>
+<rect x="790" y="356" width="56" height="22" rx="4" fill="#333"/><text x="818" y="372" fill="#ccc" text-anchor="middle" font-size="11" font-weight="700">GND</text>
+<text x="915" y="392" fill="#c4b5fd" text-anchor="middle" font-size="10">LTE + GNSS antennas fitted</text>
+
+<!-- UART crossover wires: RAK TXD0->modem RXD, RXD0->TXD, GND-GND -->
+<path d="M460 311 H620 V311 H790" stroke="#4ade80" stroke-width="2.5" fill="none"/>
+<path d="M460 339 H700 V339 H790" stroke="#4ade80" stroke-width="2.5" fill="none"/>
+<path d="M460 367 H790" stroke="#ccc" stroke-width="2.5" fill="none"/>
+<text x="625" y="305" fill="#4ade80" font-size="9">TXD0→RXD (cross)</text>
+<text x="705" y="333" fill="#4ade80" font-size="9">RXD0→TXD</text>
+
+<!-- ===== bottom note band ===== -->
+<rect x="120" y="600" width="940" height="90" rx="12" fill="#26262e" stroke="#555"/>
+<text x="140" y="626" fill="#eee" font-size="13" font-weight="700">Boot check on the console (USB or BLE): {"sensors_ok":[1,1,1,1,1,1]}</text>
+<text x="140" y="650" fill="#4ade80" font-size="12">all six 1 = wired right · then RANGE shows live mm per slot</text>
+<text x="140" y="672" fill="#f87171" font-size="12">exactly slots 5 &amp; 6 zero = NFC pins — reflash with the flag, then FULL POWER-CYCLE (not just reset)</text>
+</svg>
+
+<h2>The power chain, in words</h2>
+<table>
+<tr><th>Stage</th><th>Part</th><th>Wiring</th></tr>
+<tr><td>Generate</td><td>6 V 80×80 solar panel on the cap</td><td>PV+/PV− → charger PV input</td></tr>
+<tr><td>Charge</td><td>Solar charge board — bench <code>CN3791</code> (Li-ion), production <code>CN3058E</code> (LiFePO4)</td><td>BAT+/BAT− → the 18650</td></tr>
+<tr><td>Store</td><td>Single 18650 — bench protected Li-ion 3.7 V, production LiFePO4 ~1500 mAh</td><td>one cell feeds <b>both</b> boards</td></tr>
+<tr><td>Protect (prod)</td><td>NTC thermistor against the cell</td><td>→ charger TEMP pin, inhibits charge when cold (issue #20)</td></tr>
+<tr><td>Run — RAK</td><td>RAK19001 battery plug (JST)</td><td>from the cell</td></tr>
+<tr><td>Run — modem</td><td>Waveshare battery plug, slide switch ON</td><td>from the same cell</td></tr>
+</table>
+
+<div class="rule warn"><b>Bench-only power caution:</b> don't have both boards' USB leads plugged in while the single cell is bridged across both — that's two chargers fighting. On the bench, power from the cell (or the PSU-as-battery rig at 4.00 V) and use USB for data only.</div>
+
+<div class="rule info"><b>The two hard parts, spelled out:</b>
+<br>• <b>Slot 2 → SW1</b>, not IO2. The RAK13002 has no IO2 pad; SW1 is the free GPIO. Already set in firmware.
+<br>• <b>Slots 5 &amp; 6 → IO5/IO6, which are the nRF52840's NFC pins.</b> They are not GPIO until <code>CONFIG_NFCT_PINS_AS_GPIOS</code> writes the chip's UICR — which only takes effect after a <b>power cycle</b>, and sticks across reflashes. If those two read as faults, that's the first suspect, not the sensors or your wiring.</div>
+
+<h2>Antennas (for the enclosure, not the breadboard)</h2>
+<div class="sub">Four MHF1/u.FL leads off the carrier into the plastic cap: LTE FXUB63 (97 mm), LoRa FXP890 (62 mm), GNSS AGGP.25F (25 mm patch, flat under the ABS), BLE FXP73 (47 mm). Full detail in the eng repo's ANTENNA-BOM.md.</div>
+
+</body></html>
