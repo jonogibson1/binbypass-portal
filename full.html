@@ -48,6 +48,11 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <!-- LEDs -->
 <circle cx="560" cy="120" r="9" fill="#f87171"/>
 <text x="580" y="125" fill="#eee" font-size="12">CHRG — lit = charging</text>
+<!-- sense wire -->
+<path d="M560 111 Q600 60 690 60" stroke="#fb923c" stroke-width="3" fill="none" stroke-dasharray="8 5"/>
+<rect x="695" y="38" width="285" height="46" rx="9" fill="#3a2e1c" stroke="#fb923c"/>
+<text x="837" y="57" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">SOLAR SENSE — new wire</text>
+<text x="837" y="74" fill="#edc" text-anchor="middle" font-size="10">CHRG pad → 10k resistor → 13002 pad "CS"</text>
 <circle cx="560" cy="155" r="9" fill="#4ade80"/>
 <text x="580" y="160" fill="#eee" font-size="12">DONE/OK — lit = full (4.2 V)</text>
 <text x="560" y="195" fill="#ca8" font-size="11">Both dark in the dark tonight —</text>
@@ -102,6 +107,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><td><code>PV+ / PV−</code> (solar in)</td><td>Panel leads</td><td>Polarity matters; connect last; dark panel = inert</td></tr>
 <tr><td><code>B+ / B−</code> (BAT)</td><td>18650 holder red/black</td><td>The cell lives here permanently — the board charges it when there's sun</td></tr>
 <tr><td>Battery node (same B+/B−)</td><td>Y-splitter → RAK JST + modem battery plug</td><td>Loads sit in parallel with the cell; the CN3791 doesn't switch or regulate the output — the cell IS the supply rail</td></tr>
+<tr><td><code>CHRG</code> LED pad (IC-pin side of the LED)</td><td><b>10k resistor</b> → RAK13002 pad silkscreened <code>CS</code> (SPI row)</td><td>Solar sense: firmware reads it and puts <code>chg: 1/0</code> in every packet — "charging right now" on the portal. The 10k is <b>not optional</b> (the node sits above 3.3 V when idle). If unwired, packets just say chg 0 — nothing breaks</td></tr>
 </table>
 
 <div class="rule info"><b>How the CN3791 works, in one breath:</b> it sits between panel and cell only. When the sun's up it pulls the panel at its best-power voltage (that's the MPPT part) and pushes the energy into the cell, tapering off and stopping at 4.2 V. When there's no sun it does nothing and drains almost nothing. The RAK and modem never talk to it — they just drink from the cell, day and night. Red LED = charging, green = full, both dark at night = normal.</div>
@@ -190,8 +196,9 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><td>2</td><td>Cell into holder → CN3791 <code>B+/B−</code></td><td>polarity checked twice; no smoke, no LEDs (dark = fine)</td></tr>
 <tr><td>3</td><td>Battery node → Y-split → RAK JST + modem plug (switch ON)</td><td>RAK LED activity; sensors init</td></tr>
 <tr><td>4</td><td>Wake tap: 3V3 → PWR, 2 s</td><td>meter jumps 0.001 → ~0.067 A</td></tr>
-<tr><td>5</td><td>Panel → <code>PV+/PV−</code></td><td>nothing at night — red CHRG LED tomorrow morning</td></tr>
-<tr><td>6</td><td>Walk away</td><td><b>the map goes green</b> — packets on unit 3 with src catm1; vbat_mv shows the real cell voltage, and climbs when the sun hits</td></tr>
+<tr><td>5</td><td>Solar sense: CHRG pad → 10k → 13002 <code>CS</code> pad</td><td>with no sun it reads idle; tomorrow when the red LED lights, packets flip to <code>chg 1</code></td></tr>
+<tr><td>6</td><td>Panel → <code>PV+/PV−</code></td><td>nothing at night — red CHRG LED tomorrow morning</td></tr>
+<tr><td>7</td><td>Walk away</td><td><b>the map goes green</b> — packets on unit 3 with src catm1; vbat_mv shows the real cell voltage, and climbs when the sun hits</td></tr>
 </table>
 
 <div class="rule"><b>Success is on your phone, not the bench:</b> <a href="unit.html?unit=3" style="color:#7ab7ff">unit 3 live page</a>. Fresh packets + <code>vbat_mv</code> ~3900–4100 tonight, climbing after sunrise = solar soak underway.</div>
