@@ -165,19 +165,21 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <div class="rule">Each sensor: the <b>same four bus wires</b> (VIN, GND, SDA, SCL — daisy-chained), plus <b>one private SHUT wire</b>. The sensor pin is silkscreened <code>SHUT</code>; <code>INT</code> stays empty. Boot check: <code>sensors_ok [1,1,1,1,0,0]</code> is the expected happy state tonight — the two 0s are the unwired slots 5/6, and the firmware carries them as faults without complaint (nothing downspecced — wire them later, they light up).</div>
 
 <!-- ================= PANEL 3: MODEM ================= -->
-<h2>3 · Modem link — three wires</h2>
-<svg viewBox="0 0 1000 240" font-family="-apple-system,sans-serif">
-<rect x="40" y="40" width="280" height="160" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="1.5"/>
+<h2>3 · Modem link — four wires (the fourth ends the wake tap forever)</h2>
+<svg viewBox="0 0 1000 300" font-family="-apple-system,sans-serif">
+<rect x="40" y="40" width="280" height="205" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="1.5"/>
 <text x="180" y="70" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">RAK13002</text>
 <rect x="230" y="90" width="80" height="26" rx="5" fill="#20362a"/><text x="270" y="108" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">TXD0</text>
 <rect x="230" y="125" width="80" height="26" rx="5" fill="#20362a"/><text x="270" y="143" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">RXD0</text>
 <rect x="230" y="160" width="80" height="26" rx="5" fill="#333"/><text x="270" y="178" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<rect x="230" y="195" width="80" height="26" rx="5" fill="#3a2e1c"/><text x="270" y="213" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">CLK</text>
 
-<rect x="660" y="40" width="300" height="160" rx="12" fill="#2b2436" stroke="#a78bfa" stroke-width="1.5"/>
+<rect x="660" y="40" width="300" height="205" rx="12" fill="#2b2436" stroke="#a78bfa" stroke-width="1.5"/>
 <text x="810" y="70" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">Waveshare SIM7080G</text>
 <rect x="670" y="90" width="80" height="26" rx="5" fill="#20362a"/><text x="710" y="108" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">RXD</text>
 <rect x="670" y="125" width="80" height="26" rx="5" fill="#20362a"/><text x="710" y="143" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">TXD</text>
 <rect x="670" y="160" width="80" height="26" rx="5" fill="#333"/><text x="710" y="178" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+<rect x="670" y="195" width="80" height="26" rx="5" fill="#3a2e1c"/><text x="710" y="213" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">PWR</text>
 
 <line x1="310" y1="103" x2="670" y2="103" stroke="#4ade80" stroke-width="3.5"/>
 <text x="490" y="95" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">TXD0 → RXD (they cross)</text>
@@ -186,7 +188,10 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <line x1="310" y1="173" x2="670" y2="173" stroke="#ccc" stroke-width="3.5"/>
 <text x="490" y="165" fill="#ccc" text-anchor="middle" font-size="11" font-weight="700">GND ↔ GND (always)</text>
 
-<text x="490" y="222" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">+ after power-up: touch 3V3 → PWR for 2 seconds (wake tap), then remove</text>
+<line x1="310" y1="208" x2="670" y2="208" stroke="#fb923c" stroke-width="3.5"/>
+<text x="490" y="200" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">CLK → PWR  (remote wake — NEW)</text>
+<text x="490" y="268" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">With this wire the firmware presses its own power button.</text>
+<text x="490" y="286" fill="#888" text-anchor="middle" font-size="11">No more 3V3→PWR by hand. Auto-wake at boot, auto-recovery if the modem dies, WAKE over BLE or cellular.</text>
 </svg>
 
 <h2>Tonight's order of operations</h2>
@@ -195,11 +200,22 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><td>1</td><td>Everything dead. USB out of both boards.</td><td>—</td></tr>
 <tr><td>2</td><td>Cell into holder → CN3791 <code>B+/B−</code></td><td>polarity checked twice; no smoke, no LEDs (dark = fine)</td></tr>
 <tr><td>3</td><td>Battery node → Y-split → RAK JST + modem plug (switch ON)</td><td>RAK LED activity; sensors init</td></tr>
-<tr><td>4</td><td>Wake tap: 3V3 → PWR, 2 s</td><td>meter jumps 0.001 → ~0.067 A</td></tr>
+<tr><td>4</td><td>Remote wake wire: 13002 <code>CLK</code> → modem <code>PWR</code></td><td>firmware wakes the modem itself at boot — no hand tap. (Until this wire exists: touch 3V3 → PWR for 2 s.)</td></tr>
 <tr><td>5</td><td>Solar sense: CHRG pad → 10k → 13002 <code>CS</code> pad</td><td>with no sun it reads idle; tomorrow when the red LED lights, packets flip to <code>chg 1</code></td></tr>
 <tr><td>6</td><td>Panel → <code>PV+/PV−</code></td><td>nothing at night — red CHRG LED tomorrow morning</td></tr>
 <tr><td>7</td><td>Walk away</td><td><b>the map goes green</b> — packets on unit 3 with src catm1; vbat_mv shows the real cell voltage, and climbs when the sun hits</td></tr>
 </table>
+
+<h2>The remote-wake wire — what to buy, what to check</h2>
+<div class="rule info"><b>Why <code>CLK</code>?</b> The RAK13002's SPI row is completely unused — the sensors live on IO1/SW1/IO3/IO4, and the solar sense took <code>CS</code>. <code>CLK</code> is free, adjacent, and needs no rework anywhere else.</div>
+<table>
+<tr><th>Part</th><th>Why</th></tr>
+<tr><td><b>Dupont M–F jumper leads</b> (or M–M, to match your existing header)</td><td>The wire itself. Buy a fresh pack — the current ones have been re-seated all week and one already failed intermittently.</td></tr>
+<tr><td><b>2N7000 MOSFET</b> ×5 (or 2N2222 / BC547)</td><td>Insurance, see below. Cents each, worth having on the bench.</td></tr>
+<tr><td><b>10 kΩ resistors</b> ×5</td><td>Gate/series resistor if the MOSFET is needed.</td></tr>
+<tr><td><b>470–1000 µF electrolytic capacitor</b>, 6.3 V or higher</td><td>Not for the wake wire — across the modem's supply. This is what absorbs the TX current spike that flattened it. Cheap, and it is already issue #27 on Tamas's board.</td></tr>
+</table>
+<div class="rule warn"><b>The one thing I will measure before trusting, not assume:</b> we know empirically that touching <b>3V3</b> to <code>PWR</code> for 2 s boots the module, so a GPIO driven high should do the same. But the Waveshare has its own PWRKEY circuitry, and if that pad expects to be pulled to <b>ground</b> instead, a GPIO wired straight to it could sink more than the pin likes. First bench session: meter the pad, then either wire direct or drop a 2N7000 between <code>PWR</code> and GND with the RAK driving its gate. Ten minutes either way — but worth the ten minutes rather than cooking a GPIO.</div>
 
 <div class="rule"><b>Success is on your phone, not the bench:</b> <a href="unit.html?unit=3" style="color:#7ab7ff">unit 3 live page</a>. Fresh packets + <code>vbat_mv</code> ~3900–4100 tonight, climbing after sunrise = solar soak underway.</div>
 
