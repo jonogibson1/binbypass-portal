@@ -15,7 +15,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 </style></head><body>
 
 <h1>Solar characterisation rig</h1>
-<div class="sub">How much can the little panel really pump out, charted per-day · ESP32-S3-DevKitC + breadboard · IP67 box · logs to Home Assistant</div>
+<div class="sub">How much can the little panel really pump out, charted per-day · ESP32-S3-DevKitC + breadboard · IP67 box · battery powered, deep-sleeps · logs to Home Assistant</div>
 
 <div class="rule"><b>The question this answers:</b> real harvested Wh/day from the 6 V 150 mA panel through the CN3791, across real weather — vs the unit's consumption. That one chart decides panel count and battery size for the fence units.</div>
 
@@ -24,7 +24,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><th>#</th><th>Phase</th><th>What happens</th><th>Done when</th></tr>
 <tr><td>1</td><td>Breadboard build</td><td>Wire per the diagram below. Everything dead while wiring.</td><td>meter check: dividers read ~1/5.5 of input</td></tr>
 <tr><td>2</td><td>Flash</td><td><code>solar-test/solar-logger.yaml</code> via ESPHome — USB once, OTA forever after. Joins home WiFi, appears in HA automatically.</td><td>3 new sensors visible in HA</td></tr>
-<tr><td>3</td><td>Calibrate</td><td>Sun on panel. Multimeter vs HA readings; adjust the two <code>multiply:</code> factors until they agree.</td><td>within ~5% of the meter</td></tr>
+<tr><td>3</td><td>Calibrate</td><td>Sun on panel. Multimeter vs HA voltages; adjust the two <code>multiply:</code> factors until they agree.</td><td>within ~5% of the meter</td></tr>
 <tr><td>4</td><td>Box it</td><td>Rig into the IP67 box, panel on/near the lid facing sun, cable through a gland (or drilled + sealed hole on the BOTTOM face). Power bank inside.</td><td>sealed, logging over WiFi from its final spot</td></tr>
 <tr><td>5</td><td>Soak</td><td>7+ days untouched. HA records everything; "Solar Harvest Today" resets at midnight so every day is one bar.</td><td>a week of daily Wh bars, mixed weather</td></tr>
 <tr><td>6</td><td>Verdict</td><td>Compare harvest/day vs unit 3's real consumption/day. Answer: is one panel enough, or two, or a bigger cell.</td><td>the fence-unit power spec, evidence-backed</td></tr>
@@ -41,10 +41,10 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <text x="115" y="110" fill="#ca8" text-anchor="middle" font-size="11">on/near the box lid</text>
 
 <!-- Shunt -->
-<rect x="255" y="55" width="120" height="56" rx="9" fill="#3a2e1c" stroke="#fb923c" stroke-width="1.5"/>
-<text x="315" y="79" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">1 Ω shunt</text>
-<text x="315" y="97" fill="#edc" text-anchor="middle" font-size="10">in the panel − leg</text>
-<line x1="200" y1="83" x2="255" y2="83" stroke="#eab308" stroke-width="3.5" marker-end="url(#a)"/>
+<line x1="200" y1="83" x2="430" y2="83" stroke="#eab308" stroke-width="3.5" marker-end="url(#a)"/>
+<rect x="240" y="120" width="160" height="50" rx="9" fill="#3a2e1c" stroke="#fb923c" stroke-width="1.5"/>
+<text x="320" y="141" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700">CHRG pad → 10k → GPIO5</text>
+<text x="320" y="158" fill="#edc" text-anchor="middle" font-size="10">charging yes/no — same trick as unit 3</text>
 
 <!-- CN3791 -->
 <rect x="430" y="40" width="200" height="90" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
@@ -63,13 +63,13 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <!-- ESP32 -->
 <rect x="255" y="230" width="420" height="230" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
 <text x="465" y="260" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">ESP32-S3-DevKitC</text>
-<text x="465" y="280" fill="#7ab7ff" text-anchor="middle" font-size="11">ESPHome · WiFi → Home Assistant · powered by power bank (USB)</text>
+<text x="465" y="280" fill="#7ab7ff" text-anchor="middle" font-size="11">ESPHome · WiFi → HA · wakes every 5 min, deep-sleeps between</text>
 <rect x="270" y="300" width="90" height="26" rx="5" fill="#20362a"/><text x="315" y="318" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">GPIO1</text>
-<rect x="270" y="336" width="90" height="26" rx="5" fill="#20362a"/><text x="315" y="354" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">GPIO2</text>
+<rect x="270" y="336" width="90" height="26" rx="5" fill="#20362a"/><text x="315" y="354" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">GPIO5</text>
 <rect x="270" y="372" width="90" height="26" rx="5" fill="#20362a"/><text x="315" y="390" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">GPIO4</text>
 <rect x="270" y="408" width="90" height="26" rx="5" fill="#333"/><text x="315" y="426" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">GND</text>
 <text x="530" y="318" fill="#9fb3c8" font-size="11">← panel V, via divider</text>
-<text x="530" y="354" fill="#9fb3c8" font-size="11">← shunt top (panel current)</text>
+<text x="530" y="354" fill="#9fb3c8" font-size="11">← CHRG sense via 10k (charging yes/no)</text>
 <text x="530" y="390" fill="#9fb3c8" font-size="11">← battery V, via divider</text>
 <text x="530" y="426" fill="#9fb3c8" font-size="11">← common ground with the rig — essential</text>
 
@@ -87,34 +87,34 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 
 <!-- wires from measurement points down to ESP -->
 <path d="M240 83 L240 170 L200 170 L200 313 L270 313" stroke="#4ade80" stroke-width="2.5" fill="none" stroke-dasharray="6 4"/>
-<path d="M380 111 L380 349 L270 349" stroke="#fb923c" stroke-width="2.5" fill="none" stroke-dasharray="6 4"/>
+<path d="M320 170 L320 200 L230 200 L230 349 L270 349" stroke="#fb923c" stroke-width="2.5" fill="none" stroke-dasharray="6 4"/>
 <path d="M790 130 L790 385 L270 385" stroke="#4ade80" stroke-width="2.5" fill="none" stroke-dasharray="6 4"/>
 <text x="240" y="163" fill="#4ade80" font-size="10">panel + → divider</text>
-<text x="392" y="200" fill="#fb923c" font-size="10">shunt top → GPIO2 (direct — only ~150 mV)</text>
+
 <text x="700" y="200" fill="#4ade80" font-size="10">battery + → divider</text>
 
 <!-- powerbank -->
-<rect x="700" y="300" width="180" height="90" rx="10" fill="#26262e" stroke="#555"/>
-<text x="790" y="332" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">Power bank</text>
-<text x="790" y="352" fill="#999" text-anchor="middle" font-size="10">USB → DevKit. WiFi draw</text>
-<text x="790" y="368" fill="#999" text-anchor="middle" font-size="10">keeps most banks awake —</text>
-<text x="790" y="384" fill="#999" text-anchor="middle" font-size="10">test overnight first</text>
-<line x1="700" y1="345" x2="675" y2="345" stroke="#888" stroke-width="3" marker-end="url(#a)"/>
+<rect x="700" y="300" width="180" height="90" rx="10" fill="#20362a" stroke="#4ade80"/>
+<text x="790" y="330" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">Powered by the 18650</text>
+<text x="790" y="350" fill="#9c9" text-anchor="middle" font-size="10">BAT+ → DevKit "5V" pin</text>
+<text x="790" y="366" fill="#9c9" text-anchor="middle" font-size="10">(onboard regulator handles 3.5–4.2 V)</text>
+<text x="790" y="382" fill="#9c9" text-anchor="middle" font-size="10">deep sleep = a few mA average</text>
+<line x1="700" y1="345" x2="675" y2="345" stroke="#4ade80" stroke-width="3" marker-end="url(#a)"/>
 
 <!-- IP67 outline -->
 <rect x="15" y="15" width="905" height="480" rx="16" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="10 7"/>
 <text x="835" y="505" fill="#4ade80" font-size="11">IP67 box boundary</text>
 
 <text x="30" y="560" fill="#eee" font-size="12" font-weight="700">Measurement points, in words:</text>
-<text x="30" y="582" fill="#bbb" font-size="11">Current = the 1 Ω shunt sits in the panel's NEGATIVE lead on the way to the charger; GPIO2 reads the millivolts across it (150 mA → 150 mV).</text>
+<text x="30" y="582" fill="#bbb" font-size="11">Charge state = the CN3791 CHRG pad through a 10k into GPIO5 — LOW means the sun is charging, exactly the unit-3 trick.</text>
 <text x="30" y="600" fill="#bbb" font-size="11">Voltage = panel + and battery + each feed a 100k/22k divider; the middle taps go to GPIO1 / GPIO4. All grounds tied together.</text>
-<text x="30" y="618" fill="#bbb" font-size="11">Power = V × I computed on the board · Energy/day totalised by Home Assistant at midnight.</text>
+<text x="30" y="618" fill="#bbb" font-size="11">Deliverable now: charging hours/day + battery curve. True Wh/day switches on when the INA219 arrives (4 wires, uncomment one YAML block).</text>
 </svg>
 
-<div class="rule warn"><b>Two rules that keep the smoke in:</b> the ESP32's pins are 3.3 V — panel and battery voltages go through the dividers, never direct. And the shunt goes in the <b>negative</b> leg (low-side), so GPIO2 only ever sees millivolts.</div>
+<div class="rule warn"><b>Two rules that keep the smoke in:</b> the ESP32's pins are 3.3 V — panel and battery voltages go through the dividers, never direct. And GPIO5 must go through its <b>10k resistor</b> — the CHRG node floats above 3.3 V when idle.</div>
 
-<div class="rule info"><b>Recording:</b> the rig appears in Home Assistant as four entities — panel V, panel mA, harvest mW, and <b>"Solar Harvest Today (Wh)"</b> which resets at midnight. HA's history keeps every day automatically; a bar-chart card of daily harvest vs the unit's daily consumption is the whole deliverable. Config: <code>solar-test/solar-logger.yaml</code> in the repo.</div>
+<div class="rule info"><b>Recording:</b> the rig appears in Home Assistant as three entities — panel V, battery V, and a <b>Solar Charging</b> on/off. HA history gives charging-hours per day and the battery curve; that answers "is the panel keeping up" immediately. The INA219 upgrade turns the same chart into true Wh/day. Config: <code>solar-test/solar-logger.yaml</code> in the repo.</div>
 
-<div class="rule"><b>Upgrade path (optional, ~$6):</b> an INA219 current sensor replaces the shunt + both dividers with one I²C part and lab-grade accuracy. ESPHome supports it natively — four wires, five lines of YAML. Worth adding to the next parts order; not needed to start.</div>
+<div class="rule"><b>Upgrade path (optional, ~$6):</b> an INA219 current sensor replaces the shunt + both dividers with one I²C part and lab-grade accuracy. ESPHome supports it natively — four wires, five lines of YAML. Already the plan: the YAML ships with the INA219 block written and commented out — solder four wires, uncomment, reflash. Add it to the MOSFET/capacitor order.</div>
 
 </body></html>
