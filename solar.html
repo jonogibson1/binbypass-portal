@@ -16,7 +16,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 </style></head><body>
 
 <h1>Solar characterisation rig — detailed wiring</h1>
-<div class="sub">2–3 panels in parallel · CN3791 · one 18650 · ESP32-S3-DevKitC (battery powered, deep-sleeps) · IP67 box · logs to Home Assistant</div>
+<div class="sub">One panel · CN3791 · one 18650 · ESP32-S3-DevKitC (battery powered, deep-sleeps) · IP67 box · logs to Home Assistant</div>
 
 <div class="rule">Golden rules: wire everything <b>dead</b> (no cell in the holder, panels covered or face-down) · <b>panels connect last</b> · every ground ends up on the same breadboard rail · <span class="w">nothing above 3.3 V ever touches a GPIO directly</span>.</div>
 
@@ -28,9 +28,9 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <!-- existing rig -->
 <rect x="30" y="30" width="380" height="120" rx="12" fill="#20362a" stroke="#4ade80" stroke-width="2"/>
 <text x="220" y="60" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">YOUR EXISTING RIG — DON'T TOUCH</text>
-<text x="220" y="85" fill="#9c9" text-anchor="middle" font-size="12">panels → CN3791 → 18650 in holder</text>
+<text x="220" y="85" fill="#9c9" text-anchor="middle" font-size="12">panel → CN3791 → 18650 in holder</text>
 <text x="220" y="106" fill="#9c9" text-anchor="middle" font-size="12">exactly as it is on the bench today</text>
-<text x="220" y="132" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">extra panels? all reds together, all blacks together — that's it</text>
+<text x="220" y="132" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">one panel, one charger, one battery — as-is</text>
 
 <!-- rails -->
 <rect x="470" y="30" width="22" height="500" rx="5" fill="#3a2020"/>
@@ -105,38 +105,23 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 
 <div class="rule info">Everything below this line is the same build in full engineering detail — for checking, not for following.</div>
 <hr style="border:none;border-top:1px solid #333;margin:26px 0">
-<h2>1 · The power spine (unchanged from the unit rig)</h2>
+<h2>1 · The power spine (unchanged from the unit rig — one panel)</h2>
 <svg viewBox="0 0 1000 430" font-family="-apple-system,sans-serif">
 <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
 <!-- three panels -->
 <g>
 <rect x="30" y="30" width="130" height="70" rx="9" fill="#2e2a1c" stroke="#eab308"/>
-<text x="95" y="58" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">Panel 1</text>
+<text x="95" y="58" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">Solar panel</text>
 <text x="95" y="76" fill="#ca8" text-anchor="middle" font-size="10">6 V ~150 mA</text>
-<rect x="30" y="115" width="130" height="70" rx="9" fill="#2e2a1c" stroke="#eab308"/>
-<text x="95" y="143" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">Panel 2</text>
-<text x="95" y="161" fill="#ca8" text-anchor="middle" font-size="10">same model</text>
-<rect x="30" y="200" width="130" height="70" rx="9" fill="#2e2a1c" stroke="#eab308" stroke-dasharray="7 5"/>
-<text x="95" y="228" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">Panel 3</text>
-<text x="95" y="246" fill="#ca8" text-anchor="middle" font-size="10">optional</text>
 </g>
-<!-- parallel bus -->
 <line x1="160" y1="65" x2="230" y2="65" stroke="#eab308" stroke-width="3"/>
-<line x1="160" y1="150" x2="230" y2="150" stroke="#eab308" stroke-width="3"/>
-<line x1="160" y1="235" x2="230" y2="235" stroke="#eab308" stroke-width="3" stroke-dasharray="7 5"/>
-<line x1="230" y1="65" x2="230" y2="235" stroke="#eab308" stroke-width="3"/>
-<text x="196" y="48" fill="#ca8" font-size="10">all + together</text>
-<text x="196" y="290" fill="#888" font-size="10">all − together (via the ground rail)</text>
-<text x="240" y="130" fill="#eab308" font-size="11" font-weight="700">PARALLEL bus</text>
-<text x="240" y="147" fill="#ca8" font-size="10">+→+ and −→− only.</text>
-<text x="240" y="163" fill="#ca8" font-size="10">Voltage stays 6 V,</text>
-<text x="240" y="179" fill="#ca8" font-size="10">current adds: ~450 mA</text>
+<line x1="230" y1="65" x2="230" y2="150" stroke="#eab308" stroke-width="3"/>
 <line x1="230" y1="150" x2="420" y2="150" stroke="#eab308" stroke-width="4" marker-end="url(#a)"/>
 <!-- CN3791 -->
 <rect x="420" y="95" width="210" height="120" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="2"/>
 <text x="525" y="123" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">CN3791 charger</text>
 <text x="525" y="143" fill="#ca8" text-anchor="middle" font-size="10">PV+/PV− in · B+/B− out</text>
-<text x="525" y="161" fill="#ca8" text-anchor="middle" font-size="10">handles 3 panels fine (typ. 2 A limit)</text>
+<text x="525" y="161" fill="#ca8" text-anchor="middle" font-size="10">well within its limits at one panel</text>
 <text x="525" y="182" fill="#fb923c" text-anchor="middle" font-size="10" font-weight="700">CHRG LED pad = charge-state output</text>
 <text x="525" y="199" fill="#edc" text-anchor="middle" font-size="10">(used in section 3)</text>
 <!-- battery -->
@@ -147,12 +132,6 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <text x="800" y="161" fill="#9c9" text-anchor="middle" font-size="10">B− → holder black</text>
 <text x="800" y="182" fill="#4ade80" text-anchor="middle" font-size="10" font-weight="700">this cell also powers the ESP</text>
 <text x="800" y="198" fill="#9c9" text-anchor="middle" font-size="10">(section 2)</text>
-<!-- notes -->
-<text x="30" y="330" fill="#eee" font-size="12" font-weight="700">Parallel-panel rules:</text>
-<text x="30" y="352" fill="#bbb" font-size="11">· Same model panels only — mismatched panels fight and the weaker one wastes the stronger one's output.</text>
-<text x="30" y="370" fill="#bbb" font-size="11">· Twist each panel's leads together back to the bus; keep the bus joins on the breadboard power rails or a screw terminal.</text>
-<text x="30" y="388" fill="#bbb" font-size="11">· A 1N5817 Schottky diode in each panel's + lead stops a shaded panel eating its neighbours' output. Nice-to-have at this scale, not required for the test.</text>
-<text x="30" y="406" fill="#bbb" font-size="11">· MPP voltage doesn't change in parallel — the CN3791 needs no adjustment for 1, 2 or 3 panels.</text>
 </svg>
 
 <h2>2 · The logger — every wire, pin by pin</h2>
@@ -192,9 +171,9 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <!-- ina219 future -->
 <rect x="130" y="520" width="290" height="120" rx="9" fill="#1b1b20" stroke="#60a5fa" stroke-dasharray="7 5"/>
 <text x="275" y="542" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">INA219 — reserved seat (on order)</text>
-<text x="145" y="566" fill="#ddd" font-size="11">Panel bus + ── VIN+ · VIN− ── CN3791 PV+</text>
+<text x="145" y="566" fill="#ddd" font-size="11">Panel + ── VIN+ · VIN− ── CN3791 PV+</text>
 <text x="145" y="586" fill="#ddd" font-size="11">VCC←3V3 · GND←GND · SDA→GPIO8 · SCL→GPIO9</text>
-<text x="145" y="608" fill="#888" font-size="10">sits IN the combined panel + lead (high side, its design)</text>
+<text x="145" y="608" fill="#888" font-size="10">sits IN the panel + lead (high side, its design)</text>
 <text x="145" y="624" fill="#888" font-size="10">then uncomment its YAML block — true W and Wh/day</text>
 
 <!-- ESP -->
@@ -240,16 +219,16 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <h3>Every connection as a checklist</h3>
 <table>
 <tr><th>#</th><th>From</th><th>To</th><th>Wire / part</th><th>Check before power</th></tr>
-<tr><td>1</td><td>All panel <b>+</b> leads</td><td>PANEL+ bus (screw terminal or + row)</td><td>panel leads, twisted</td><td>panels covered while wiring</td></tr>
-<tr><td>2</td><td>All panel <b>−</b> leads</td><td>breadboard <b>− rail</b></td><td>panel leads</td><td>—</td></tr>
-<tr><td>3</td><td>PANEL+ bus</td><td>CN3791 <code>PV+</code></td><td>jumper</td><td><span class="w">not the BAT side</span> — read the silkscreen</td></tr>
+<tr><td>1</td><td>Panel <b>+</b> lead</td><td>a spare breadboard row = the PANEL+ row</td><td>panel lead</td><td>panel covered / face-down while wiring</td></tr>
+<tr><td>2</td><td>Panel <b>−</b> lead</td><td>breadboard <b>− rail</b></td><td>panel lead</td><td>—</td></tr>
+<tr><td>3</td><td>PANEL+ row</td><td>CN3791 <code>PV+</code></td><td>jumper</td><td><span class="w">not the BAT side</span> — read the silkscreen</td></tr>
 <tr><td>4</td><td>− rail</td><td>CN3791 <code>PV−</code></td><td>jumper</td><td>—</td></tr>
 <tr><td>5</td><td>CN3791 <code>B+</code> / <code>B−</code></td><td>18650 holder red / black</td><td>holder leads</td><td>polarity twice — reverse kills the board</td></tr>
 <tr><td>6</td><td>Holder red (BAT+)</td><td>breadboard <b>+ rail</b></td><td>jumper</td><td>—</td></tr>
 <tr><td>7</td><td>Holder black</td><td>breadboard <b>− rail</b></td><td>jumper</td><td>one ground, everything on it</td></tr>
 <tr><td>8</td><td>+ rail</td><td>ESP <code>5V</code> pin</td><td>jumper</td><td><span class="w">pull this before any USB flashing</span></td></tr>
 <tr><td>9</td><td>− rail</td><td>ESP <code>GND</code> pin</td><td>jumper</td><td>—</td></tr>
-<tr><td>10</td><td>PANEL+ bus</td><td>100k → tap ● → 22k → − rail</td><td>Divider A</td><td>tap row holds: 100k end, 22k end, GPIO wire — nothing else</td></tr>
+<tr><td>10</td><td>PANEL+ row</td><td>100k → tap ● → 22k → − rail</td><td>Divider A</td><td>tap row holds: 100k end, 22k end, GPIO wire — nothing else</td></tr>
 <tr><td>11</td><td>Divider A tap ●</td><td>ESP <code>GPIO1</code></td><td>jumper</td><td>—</td></tr>
 <tr><td>12</td><td>+ rail (BAT+)</td><td>100k → tap ● → 22k → − rail</td><td>Divider B</td><td>—</td></tr>
 <tr><td>13</td><td>Divider B tap ●</td><td>ESP <code>GPIO4</code></td><td>jumper</td><td>—</td></tr>
@@ -262,9 +241,9 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><td>1</td><td>All 14 rows above wired, cell OUT, panels covered</td><td>meter continuity: + rail to − rail is NOT a short</td></tr>
 <tr><td>2</td><td>Cell into holder</td><td>ESP LED flickers — it's booting off the cell</td></tr>
 <tr><td>3</td><td>First flash is over USB: <b>pull the 5V-pin wire first</b>, plug USB, <code>esphome run solar-test/solar-logger.yaml</code>, replace the wire after</td><td>"Solar Test Rig" appears in HA with 3 entities</td></tr>
-<tr><td>4</td><td>Uncover the panels / put the rig in sun</td><td>panel V jumps to ~6 V, <b>Solar Charging flips on</b> in HA</td></tr>
+<tr><td>4</td><td>Uncover the panel / put the rig in sun</td><td>panel V jumps to ~6 V, <b>Solar Charging flips on</b> in HA</td></tr>
 <tr><td>5</td><td>Calibrate: multimeter across battery vs HA's battery V</td><td>tweak the two <code>multiply:</code> values until they agree; same for panel V</td></tr>
-<tr><td>6</td><td>Into the IP67 box — panel(s) outside on/near the lid, glands sealed, box in its final spot</td><td>still reporting from there (WiFi check on your phone)</td></tr>
+<tr><td>6</td><td>Into the IP67 box — panel outside on/near the lid, glands sealed, box in its final spot</td><td>still reporting from there (WiFi check on your phone)</td></tr>
 <tr><td>7</td><td>7-day soak, hands off</td><td>HA history: charging-hours per day + battery curve. INA219 later upgrades the same chart to true Wh/day</td></tr>
 </table>
 
