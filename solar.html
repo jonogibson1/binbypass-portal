@@ -20,6 +20,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 
 <div class="rule">Golden rules: wire everything <b>dead</b> (no cell in the holder, panels covered or face-down) · <b>panels connect last</b> · every ground ends up on the same breadboard rail · <span class="w">nothing above 3.3 V ever touches a GPIO directly</span>.</div>
 
+<div class="rule" style="border-color:#4ade80"><b>PLAN OF RECORD (waiting on the AliExpress parcel):</b> the INA219 measures panel volts AND amps itself — <b>no resistor kit needed for this build</b>. Four wires when it lands: INA219 <code>VCC→3V3 · GND→GND · SDA→terminal 8 · SCL→terminal 9</code>, then the panel's + lead runs through its <code>VIN+ / VIN−</code> terminals on the way to the CN3791. ESP powered by USB or the battery rail. Flash <code>solar-logger.yaml</code> and the chart starts: volts, milliamps, watts live — <b>Wh per day</b> as the headline, recorded permanently. Everything below is background.</div>
 <h2 style="color:#4ade80">THE SIMPLE VERSION — build it in 10 steps</h2>
 <div class="rule info"><b>UPDATE — you have the screw-terminal shield (the green board): even easier.</b> Forget the breadboard for connections — every ESP pin is a labelled screw terminal. The build becomes:
 <br>· <b>Battery power:</b> BAT+ wire into the terminal marked <code>5Vin</code>, battery − into <code>GND</code>. Done — no rails.
