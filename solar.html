@@ -189,4 +189,40 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 
 <div class="rule"><b>Recording:</b> three HA entities — panel V, battery V, Solar Charging on/off. History gives charging-hours/day and the battery curve; that's the panel verdict. Config: <code>solar-test/solar-logger.yaml</code> (INA219 block ready, commented out).</div>
 
+
+<h2>4 · Live results — from the permanent record</h2>
+<div class="rule info"><b>Where the data really lives:</b> every 5-minute wake writes one row to the fleet database (same Supabase as unit 3's packets) — no retention limit, survives HA purges, readable from anywhere. Below: the most recent days, straight from that table.</div>
+<div id="solar-live" class="sub">loading the record…</div>
+<script>
+(async () => {
+  const el = document.getElementById('solar-live');
+  try {
+    const r = await fetch('https://kyjrqpibtncvhxwcaovx.supabase.co/rest/v1/solar_readings?select=received_at,panel_v,batt_v,charging&order=id.desc&limit=1000',
+      {headers:{apikey:'sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc'}});
+    const rows = await r.json();
+    if (!rows.length) { el.textContent = 'No readings yet — the rig hasn\'t sent its first row.'; return; }
+    const days = {};
+    for (const x of rows) {
+      const d = new Date(x.received_at).toLocaleDateString('en-AU',{day:'2-digit',month:'short'});
+      (days[d] ||= {chg:0,n:0,vmin:99,vmax:0});
+      const D = days[d];
+      D.n++; if (x.charging) D.chg++;
+      if (x.batt_v>0.5){ D.vmin=Math.min(D.vmin,x.batt_v); D.vmax=Math.max(D.vmax,x.batt_v); }
+    }
+    const latest = rows[0];
+    let h = `<table><tr><th>Latest</th><th>Panel</th><th>Battery</th><th>Charging</th></tr>
+      <tr><td>${new Date(latest.received_at).toLocaleString('en-AU')}</td>
+      <td>${latest.panel_v?.toFixed(2)} V</td><td>${latest.batt_v?.toFixed(2)} V</td>
+      <td>${latest.charging ? '<span style="color:#4ade80;font-weight:700">YES</span>' : 'no'}</td></tr></table>`;
+    h += '<table><tr><th>Day</th><th>Charging hours</th><th>Battery min–max</th><th></th></tr>';
+    for (const [d,D] of Object.entries(days)) {
+      const hrs = (D.chg*5/60).toFixed(1);
+      const bar = '<div style="background:#333;border-radius:4px;height:10px;width:100%"><div style="background:#4ade80;border-radius:4px;height:10px;width:'+Math.min(100,hrs/12*100)+'%"></div></div>';
+      h += `<tr><td>${d}</td><td>${hrs} h</td><td>${D.vmin<99 ? D.vmin.toFixed(2)+'–'+D.vmax.toFixed(2)+' V' : '—'}</td><td style="width:35%">${bar}</td></tr>`;
+    }
+    h += '</table><div class="sub">Showing the last ~1000 samples (~3½ days at 5-min cadence). The table itself keeps everything, forever.</div>';
+    el.innerHTML = h;
+  } catch(e){ el.textContent = 'record unreachable: ' + e; }
+})();
+</script>
 </body></html>
