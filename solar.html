@@ -21,6 +21,12 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <div class="rule">Golden rules: wire everything <b>dead</b> (no cell in the holder, panels covered or face-down) · <b>panels connect last</b> · every ground ends up on the same breadboard rail · <span class="w">nothing above 3.3 V ever touches a GPIO directly</span>.</div>
 
 <h2 style="color:#4ade80">THE SIMPLE VERSION — build it in 10 steps</h2>
+<div class="rule info"><b>UPDATE — you have the screw-terminal shield (the green board): even easier.</b> Forget the breadboard for connections — every ESP pin is a labelled screw terminal. The build becomes:
+<br>· <b>Battery power:</b> BAT+ wire into the terminal marked <code>5Vin</code>, battery − into <code>GND</code>. Done — no rails.
+<br>· <b>Divider A (panel):</b> twist one leg of the 100k and one leg of the 22k together with a short wire and screw all three into terminal <code>6</code>. The 100k's other leg goes to panel +, the 22k's other leg into a <code>GND</code> terminal.
+<br>· <b>Divider B (battery):</b> same trick into terminal <code>4</code> — 100k's far leg to <code>5Vin</code>'s wire (BAT+), 22k's far leg to <code>GND</code>.
+<br>· <b>Charge sense:</b> 10k from the CN3791 CHRG pad, its other leg into terminal <code>5</code>.
+<br>All three signals sit on neighbouring terminals <code>4 · 5 · 6</code>. Screw terminals grip resistor legs properly — this will survive the IP67 box far better than any breadboard. The diagrams below still show the breadboard version; the electrical connections are identical.</div>
 <div class="rule"><b>Big picture:</b> your solar → charger → battery wiring from the unit rig <b>does not change at all</b>. You are only ADDING the logger: the ESP board, 5 resistors and 8 wires. If a step says a colour band, that's the stripes painted on the resistor.</div>
 
 <svg viewBox="0 0 1000 560" font-family="-apple-system,sans-serif">
@@ -50,7 +56,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <g font-size="13" font-weight="700">
 <rect x="655" y="80" width="86" height="28" rx="5" fill="#3a2020"/><text x="698" y="99" fill="#f87171" text-anchor="middle">5V</text>
 <rect x="655" y="118" width="86" height="28" rx="5" fill="#333"/><text x="698" y="137" fill="#ccc" text-anchor="middle">GND</text>
-<rect x="655" y="156" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="175" fill="#4ade80" text-anchor="middle">GPIO1</text>
+<rect x="655" y="156" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="175" fill="#4ade80" text-anchor="middle">GPIO6</text>
 <rect x="655" y="194" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="213" fill="#4ade80" text-anchor="middle">GPIO4</text>
 <rect x="655" y="232" width="86" height="28" rx="5" fill="#3a2e1c"/><text x="698" y="251" fill="#fb923c" text-anchor="middle">GPIO5</text>
 </g>
@@ -95,7 +101,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><td>4</td><td>Wire: BLUE rail → ESP pin printed <code>GND</code></td></tr>
 <tr><td>5</td><td><b>Divider A:</b> 100k (yellow stripe) — one leg in the row where the <b>panel + wire</b> arrives, other leg into an empty row = <b>meeting point A</b>. Then 22k (red-red-orange) — one leg into meeting point A, other leg to the BLUE rail</td></tr>
 <tr><td>6</td><td><b>Divider B:</b> the other 100k — one leg on the RED rail, other leg into a different empty row = <b>meeting point B</b>. The other 22k — one leg into meeting point B, other leg to the BLUE rail</td></tr>
-<tr><td>7</td><td>Wire: meeting point A → ESP <code>GPIO1</code></td></tr>
+<tr><td>7</td><td>Wire: meeting point A → ESP <code>GPIO6</code></td></tr>
 <tr><td>8</td><td>Wire: meeting point B → ESP <code>GPIO4</code></td></tr>
 <tr><td>9</td><td>The 10k (brown-black-orange): one leg soldered/hooked to the CN3791's <b>CHRG</b> LED pad, the other leg to a wire → ESP <code>GPIO5</code></td></tr>
 <tr><td>10</td><td>Look over steps 1–9 once more, then battery into the holder. ESP light flickers = alive. Photo → me → I flash it from here (or you run one command)</td></tr>
@@ -183,7 +189,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <g font-size="12" font-weight="700">
 <rect x="540" y="130" width="80" height="26" rx="5" fill="#3a2020"/><text x="580" y="148" fill="#f87171" text-anchor="middle">5V</text>
 <rect x="540" y="166" width="80" height="26" rx="5" fill="#333"/><text x="580" y="184" fill="#ccc" text-anchor="middle">GND</text>
-<rect x="540" y="202" width="80" height="26" rx="5" fill="#20362a"/><text x="580" y="220" fill="#4ade80" text-anchor="middle">GPIO1</text>
+<rect x="540" y="202" width="80" height="26" rx="5" fill="#20362a"/><text x="580" y="220" fill="#4ade80" text-anchor="middle">GPIO6</text>
 <rect x="540" y="238" width="80" height="26" rx="5" fill="#20362a"/><text x="580" y="256" fill="#4ade80" text-anchor="middle">GPIO4</text>
 <rect x="540" y="274" width="80" height="26" rx="5" fill="#3a2e1c"/><text x="580" y="292" fill="#fb923c" text-anchor="middle">GPIO5</text>
 <rect x="540" y="310" width="80" height="26" rx="5" fill="#1e3a5f"/><text x="580" y="328" fill="#60a5fa" text-anchor="middle">GPIO8</text>
@@ -229,7 +235,7 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 <tr><td>8</td><td>+ rail</td><td>ESP <code>5V</code> pin</td><td>jumper</td><td><span class="w">pull this before any USB flashing</span></td></tr>
 <tr><td>9</td><td>− rail</td><td>ESP <code>GND</code> pin</td><td>jumper</td><td>—</td></tr>
 <tr><td>10</td><td>PANEL+ row</td><td>100k → tap ● → 22k → − rail</td><td>Divider A</td><td>tap row holds: 100k end, 22k end, GPIO wire — nothing else</td></tr>
-<tr><td>11</td><td>Divider A tap ●</td><td>ESP <code>GPIO1</code></td><td>jumper</td><td>—</td></tr>
+<tr><td>11</td><td>Divider A tap ●</td><td>ESP <code>GPIO6</code></td><td>jumper</td><td>—</td></tr>
 <tr><td>12</td><td>+ rail (BAT+)</td><td>100k → tap ● → 22k → − rail</td><td>Divider B</td><td>—</td></tr>
 <tr><td>13</td><td>Divider B tap ●</td><td>ESP <code>GPIO4</code></td><td>jumper</td><td>—</td></tr>
 <tr><td>14</td><td>CN3791 <code>CHRG</code> LED pad (IC side)</td><td>10k → ESP <code>GPIO5</code></td><td>10k + jumper</td><td><span class="w">10k is mandatory</span> — node floats ~4 V idle</td></tr>
