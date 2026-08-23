@@ -20,6 +20,91 @@ th{color:#999;font-size:11px;text-transform:uppercase}
 
 <div class="rule">Golden rules: wire everything <b>dead</b> (no cell in the holder, panels covered or face-down) · <b>panels connect last</b> · every ground ends up on the same breadboard rail · <span class="w">nothing above 3.3 V ever touches a GPIO directly</span>.</div>
 
+<h2 style="color:#4ade80">THE SIMPLE VERSION — build it in 10 steps</h2>
+<div class="rule"><b>Big picture:</b> your solar → charger → battery wiring from the unit rig <b>does not change at all</b>. You are only ADDING the logger: the ESP board, 5 resistors and 8 wires. If a step says a colour band, that's the stripes painted on the resistor.</div>
+
+<svg viewBox="0 0 1000 560" font-family="-apple-system,sans-serif">
+<defs><marker id="s" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
+<!-- existing rig -->
+<rect x="30" y="30" width="380" height="120" rx="12" fill="#20362a" stroke="#4ade80" stroke-width="2"/>
+<text x="220" y="60" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">YOUR EXISTING RIG — DON'T TOUCH</text>
+<text x="220" y="85" fill="#9c9" text-anchor="middle" font-size="12">panels → CN3791 → 18650 in holder</text>
+<text x="220" y="106" fill="#9c9" text-anchor="middle" font-size="12">exactly as it is on the bench today</text>
+<text x="220" y="132" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">extra panels? all reds together, all blacks together — that's it</text>
+
+<!-- rails -->
+<rect x="470" y="30" width="22" height="500" rx="5" fill="#3a2020"/>
+<text x="481" y="550" fill="#f87171" text-anchor="middle" font-size="13" font-weight="700">RED rail</text>
+<rect x="520" y="30" width="22" height="500" rx="5" fill="#2a2a32"/>
+<text x="531" y="550" fill="#aaa" text-anchor="middle" font-size="13" font-weight="700">BLUE rail</text>
+
+<!-- step wires from rig to rails -->
+<line x1="410" y1="70" x2="470" y2="70" stroke="#f87171" stroke-width="5" marker-end="url(#s)"/>
+<text x="435" y="60" fill="#f87171" font-size="12" font-weight="700">1</text>
+<line x1="410" y1="110" x2="520" y2="110" stroke="#aaa" stroke-width="5" marker-end="url(#s)"/>
+<text x="435" y="100" fill="#aaa" font-size="12" font-weight="700">2</text>
+
+<!-- ESP -->
+<rect x="640" y="30" width="330" height="330" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
+<text x="805" y="60" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">ESP32 board</text>
+<g font-size="13" font-weight="700">
+<rect x="655" y="80" width="86" height="28" rx="5" fill="#3a2020"/><text x="698" y="99" fill="#f87171" text-anchor="middle">5V</text>
+<rect x="655" y="118" width="86" height="28" rx="5" fill="#333"/><text x="698" y="137" fill="#ccc" text-anchor="middle">GND</text>
+<rect x="655" y="156" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="175" fill="#4ade80" text-anchor="middle">GPIO1</text>
+<rect x="655" y="194" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="213" fill="#4ade80" text-anchor="middle">GPIO4</text>
+<rect x="655" y="232" width="86" height="28" rx="5" fill="#3a2e1c"/><text x="698" y="251" fill="#fb923c" text-anchor="middle">GPIO5</text>
+</g>
+<text x="760" y="99" fill="#9fb3c8" font-size="11">← wire 3, from RED rail</text>
+<text x="760" y="137" fill="#9fb3c8" font-size="11">← wire 4, from BLUE rail</text>
+<text x="760" y="175" fill="#9fb3c8" font-size="11">← wire 7, from meeting point A</text>
+<text x="760" y="213" fill="#9fb3c8" font-size="11">← wire 8, from meeting point B</text>
+<text x="760" y="251" fill="#9fb3c8" font-size="11">← wire 9, from the 10k resistor</text>
+<text x="805" y="300" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">read the names printed on the board —</text>
+<text x="805" y="318" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">never count pins</text>
+<text x="805" y="344" fill="#888" text-anchor="middle" font-size="10">plug nothing else into it</text>
+
+<!-- resistor legend -->
+<rect x="30" y="200" width="380 " height="330" rx="12" fill="#26262e" stroke="#555"/>
+<text x="220" y="230" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">The 5 resistors — find them by their stripes</text>
+<!-- 100k -->
+<rect x="60" y="255" width="90" height="22" rx="8" fill="#c9b18a"/>
+<rect x="72" y="255" width="8" height="22" fill="#7a4a1e"/><rect x="88" y="255" width="8" height="22" fill="#111"/><rect x="104" y="255" width="8" height="22" fill="#e8d426"/><rect x="124" y="255" width="8" height="22" fill="#d4a017"/>
+<text x="170" y="272" fill="#ddd" font-size="12"><tspan font-weight="700">100k ×2</tspan> — brown, black, YELLOW</text>
+<!-- 22k -->
+<rect x="60" y="295" width="90" height="22" rx="8" fill="#c9b18a"/>
+<rect x="72" y="295" width="8" height="22" fill="#c0392b"/><rect x="88" y="295" width="8" height="22" fill="#c0392b"/><rect x="104" y="295" width="8" height="22" fill="#e67e22"/><rect x="124" y="295" width="8" height="22" fill="#d4a017"/>
+<text x="170" y="312" fill="#ddd" font-size="12"><tspan font-weight="700">22k ×2</tspan> — red, red, ORANGE</text>
+<!-- 10k -->
+<rect x="60" y="335" width="90" height="22" rx="8" fill="#c9b18a"/>
+<rect x="72" y="335" width="8" height="22" fill="#7a4a1e"/><rect x="88" y="335" width="8" height="22" fill="#111"/><rect x="104" y="335" width="8" height="22" fill="#e67e22"/><rect x="124" y="335" width="8" height="22" fill="#d4a017"/>
+<text x="170" y="352" fill="#ddd" font-size="12"><tspan font-weight="700">10k ×1</tspan> — brown, black, ORANGE</text>
+<text x="60" y="392" fill="#888" font-size="11">100k and 10k look similar — the 3rd stripe is the tell:</text>
+<text x="60" y="410" fill="#888" font-size="11">YELLOW = 100k, ORANGE = 10k. Torch helps.</text>
+<text x="60" y="444" fill="#eee" font-size="12" font-weight="700">"Meeting point" = one breadboard row where</text>
+<text x="60" y="462" fill="#eee" font-size="12" font-weight="700">two resistor legs + one wire share the holes.</text>
+<text x="60" y="490" fill="#888" font-size="11">Meeting point A lives in any empty row. So does B.</text>
+<text x="60" y="508" fill="#888" font-size="11">They must be different rows, away from each other.</text>
+</svg>
+
+<h3>The 10 steps, in order — battery OUT of the holder until step 10</h3>
+<table>
+<tr><th>#</th><th>Do this</th></tr>
+<tr><td>1</td><td>Wire from the battery holder's <b>red</b> lead junction → breadboard <b>RED rail</b></td></tr>
+<tr><td>2</td><td>Wire from the battery holder's <b>black</b> lead junction → breadboard <b>BLUE rail</b></td></tr>
+<tr><td>3</td><td>Wire: RED rail → ESP pin printed <code>5V</code></td></tr>
+<tr><td>4</td><td>Wire: BLUE rail → ESP pin printed <code>GND</code></td></tr>
+<tr><td>5</td><td><b>Divider A:</b> 100k (yellow stripe) — one leg in the row where the <b>panel + wire</b> arrives, other leg into an empty row = <b>meeting point A</b>. Then 22k (red-red-orange) — one leg into meeting point A, other leg to the BLUE rail</td></tr>
+<tr><td>6</td><td><b>Divider B:</b> the other 100k — one leg on the RED rail, other leg into a different empty row = <b>meeting point B</b>. The other 22k — one leg into meeting point B, other leg to the BLUE rail</td></tr>
+<tr><td>7</td><td>Wire: meeting point A → ESP <code>GPIO1</code></td></tr>
+<tr><td>8</td><td>Wire: meeting point B → ESP <code>GPIO4</code></td></tr>
+<tr><td>9</td><td>The 10k (brown-black-orange): one leg soldered/hooked to the CN3791's <b>CHRG</b> LED pad, the other leg to a wire → ESP <code>GPIO5</code></td></tr>
+<tr><td>10</td><td>Look over steps 1–9 once more, then battery into the holder. ESP light flickers = alive. Photo → me → I flash it from here (or you run one command)</td></tr>
+</table>
+
+<div class="rule warn"><b>Only three ways to get this wrong:</b> panel or battery + wired straight to a GPIO without going through its resistor pair (steps 5–6 exist for a reason) · the 10k missing from step 9 · USB plugged in while wire 3 is connected (pull wire 3 off the 5V pin whenever USB goes in).</div>
+
+<div class="rule info">Everything below this line is the same build in full engineering detail — for checking, not for following.</div>
+<hr style="border:none;border-top:1px solid #333;margin:26px 0">
 <h2>1 · The power spine (unchanged from the unit rig)</h2>
 <svg viewBox="0 0 1000 430" font-family="-apple-system,sans-serif">
 <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
