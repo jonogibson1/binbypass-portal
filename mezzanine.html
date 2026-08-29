@@ -1,0 +1,67 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass — mezzanine orientation measurement</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:900px;margin:auto;line-height:1.6}
+h1{font-size:21px;margin-bottom:4px}h2{font-size:16px;margin:26px 0 8px;color:#7ab7ff}
+.sub{color:#999;font-size:13px}
+.rule{background:#1c2b22;border:1px solid #166534;border-radius:12px;padding:11px 15px;font-size:13.5px;margin:12px 0}
+.warn{background:#2b1c1c;border-color:#7f1d1d}
+.info{background:#1c2331;border-color:#1e40af}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+td,th{padding:8px 10px;text-align:left;border-bottom:1px solid #333;vertical-align:top}
+th{color:#999;font-size:11px;text-transform:uppercase}
+code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
+.big{font-size:15px;font-weight:700;color:#4ade80}
+</style></head><body>
+
+<h1>The mezzanine measurement — for Tamas</h1>
+<div class="sub">Ten minutes · nothing is powered · you cannot break anything or hurt yourself · this unblocks the whole carrier board</div>
+
+<div class="rule info"><b>What this is, in one line:</b> the module-to-base connector has no orientation mark, so we prove where two known signals physically sit by making the meter beep, and photograph the answer.</div>
+
+<h2>Grab</h2>
+<table>
+<tr><td>1</td><td>One <b>mesh-kit base board</b> from the DigiKey box (leave unit 3 alone — it's working)</td></tr>
+<tr><td>2</td><td>The RAK4631 module <b>unclipped</b> from it — we probe the EMPTY socket</td></tr>
+<tr><td>3</td><td>Multimeter + the needle tips</td></tr>
+<tr><td>4</td><td>Phone for photos · good light · reading glasses if they help — the feet are tiny</td></tr>
+</table>
+
+<h2>Step 1 — the reference photo (do this FIRST)</h2>
+<div class="rule">Bare board flat on the bench, <b>USB connector pointing toward you</b> (down in the photo). Take one sharp photo of the whole board. Every position we record is described against THIS photo — it's the map everything hangs off. Don't move the board after; if you do, same orientation again.</div>
+
+<h2>Step 2 — meter on beep mode</h2>
+<div class="rule">Turn the dial to the symbol that looks like a <b>sound wave / speaker</b> (often shares a spot with the diode arrow — press the mode button until the display shows the sound symbol). Touch the two probe tips together: it should <b>beep</b>. That's the whole skill. Nothing is powered at any point.</div>
+
+<h2>Step 3 — know your target</h2>
+<div class="rule">The mezzanine socket is the small connector in the middle of the board where the module clips on. Don't poke inside it — the pins bend. Instead work on its <b>solder feet</b>: the two neat rows of tiny metal tabs along its long edges, 20 per side. In your reference photo orientation, call them the <b>LEFT row</b> and <b>RIGHT row</b>, feet numbered <b>1–20 counting from the TOP</b> (the end away from the USB).</div>
+
+<h2>Step 4 — first signal: battery +</h2>
+<table>
+<tr><td class="big">4a</td><td>One needle tip pressed onto the <b>battery connector's + pin</b> (the JST socket — the + is marked on the silkscreen; it's also the pin the red wire goes to). Hold it there.</td></tr>
+<tr><td class="big">4b</td><td>Other needle tip: touch each solder foot in turn. Start top-left, work down; then the right row. <b>Slow, one foot at a time.</b></td></tr>
+<tr><td class="big">4c</td><td>When it beeps — note the position ("LEFT row, feet 1 and 2" style). Battery + usually lands on <b>two or three neighbouring feet</b> — that's normal and expected, record all of them.</td></tr>
+<tr><td class="big">4d</td><td>Photo of the connector with your probe on a beeping foot (or mark the positions on a screenshot after).</td></tr>
+</table>
+<div class="rule warn"><b>The one trap:</b> a fat or tilted tip touching TWO feet at once fakes a beep on the wrong pin. Check yourself: probe two feet <i>next to</i> a beeping one — if everything beeps, you're bridging; use the very point of the needle.</div>
+
+<h2>Step 5 — second signal: an IO pad at the other end</h2>
+<div class="rule">One signal can't tell a flip from a match — we need a second, from a <b>different part of the connector</b>. Find a <b>silkscreen-labelled through-hole</b> on the board — names like <code>IO1</code>, <code>IO2</code>, <code>TXD</code>, <code>SW1</code>, <code>3V3</code> printed next to small holes (on the slot/header areas). Pick ONE with a clear label — <code>IO1</code> is ideal. Needle tip into (or onto) that hole, then hunt the feet again exactly like step 4. An IO signal should beep on <b>exactly one foot</b>. Record label + position + photo.</div>
+<div class="rule info">If you can't find a labelled IO hole on the mini base, use <code>GND</code> instead (battery connector's − pin): it beeps on SEVERAL feet spread around — photograph which ones. The pattern of many-GND + the battery-pair is still enough for Tamas to orient the connector.</div>
+
+<h2>Step 6 — the bonus photo Tamas can't get anywhere else</h2>
+<div class="rule">From the drawer: one <b>loose AXK socket</b> (the DigiKey bag marked AXK5F40547YG). Photograph it next to the <b>underside of the RAK4631 module</b>, close up, so the little <b>notch/keying and the corner shapes</b> of both connectors are visible in one frame. This is the physical footprint reference his datasheets don't show.</div>
+
+<h2>Step 7 — what to send</h2>
+<table>
+<tr><th></th><th>Item</th></tr>
+<tr><td>1</td><td>Reference photo (whole board, USB at bottom)</td></tr>
+<tr><td>2</td><td>Your notes, e.g.: <code>BAT+ → LEFT row, feet 1+2 · IO1 → RIGHT row, foot 7</code> (counting from the top/away-from-USB end)</td></tr>
+<tr><td>3</td><td>Close-up photos of the beeping positions</td></tr>
+<tr><td>4</td><td>The loose-socket-vs-module photo</td></tr>
+<tr><td>5</td><td>One line: "measured on the RAK19007 base, module removed, board unpowered"</td></tr>
+</table>
+
+<div class="rule"><b>That's the whole job.</b> If anything beeps in a way that seems weird — everything beeps, nothing beeps, the counts don't make sense — stop and describe it; weird results are information too (nothing you can do with a beeper can damage the board).</div>
+
+</body></html>
