@@ -1,268 +1,107 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bin Bypass — solar characterisation rig</title>
+<title>Bin Bypass — solar power logger (INA219)</title>
 <style>
-body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:1000px;margin:auto;line-height:1.55}
-h1{font-size:22px;margin-bottom:2px}h2{font-size:17px;margin:28px 0 6px}h3{font-size:14px;margin:18px 0 4px;color:#7ab7ff}
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:900px;margin:auto;line-height:1.6}
+h1{font-size:21px;margin-bottom:4px}h2{font-size:16px;margin:26px 0 8px;color:#7ab7ff}
 .sub{color:#999;font-size:13px}
-.rule{background:#1c2b22;border:1px solid #166534;border-radius:12px;padding:11px 15px;font-size:13px;margin:12px 0}
+.rule{background:#1c2b22;border:1px solid #166534;border-radius:12px;padding:11px 15px;font-size:13.5px;margin:12px 0}
 .warn{background:#2b1c1c;border-color:#7f1d1d}
 .info{background:#1c2331;border-color:#1e40af}
 svg{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;margin:10px 0}
-code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
-td,th{padding:6px 9px;text-align:left;border-bottom:1px solid #333}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+td,th{padding:8px 10px;text-align:left;border-bottom:1px solid #333;vertical-align:top}
 th{color:#999;font-size:11px;text-transform:uppercase}
-.w{color:#f87171;font-weight:700}.g{color:#4ade80;font-weight:700}.o{color:#fb923c;font-weight:700}.b{color:#60a5fa;font-weight:700}
+code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 </style></head><body>
 
-<h1>Solar characterisation rig — detailed wiring</h1>
-<div class="sub">One panel · CN3791 · one 18650 · ESP32-S3-DevKitC (battery powered, deep-sleeps) · IP67 box · logs to Home Assistant</div>
+<h1>Solar power logger — the INA219 build</h1>
+<div class="sub">Measures the panel's real volts, milliamps, watts · Wh per day charted forever · no resistors needed</div>
 
-<div class="rule">Golden rules: wire everything <b>dead</b> (no cell in the holder, panels covered or face-down) · <b>panels connect last</b> · every ground ends up on the same breadboard rail · <span class="w">nothing above 3.3 V ever touches a GPIO directly</span>.</div>
+<div class="rule"><b>The idea in one line:</b> the INA219 sits in the panel's + wire like a water meter in a pipe — everything the panel produces flows through it and gets counted.</div>
 
-<div class="rule" style="border-color:#4ade80"><b>PLAN OF RECORD (waiting on the AliExpress parcel):</b> the INA219 measures panel volts AND amps itself — <b>no resistor kit needed for this build</b>. Four wires when it lands: INA219 <code>VCC→3V3 · GND→GND · SDA→terminal 8 · SCL→terminal 9</code>, then the panel's + lead runs through its <code>VIN+ / VIN−</code> terminals on the way to the CN3791. ESP powered by USB or the battery rail. Flash <code>solar-logger.yaml</code> and the chart starts: volts, milliamps, watts live — <b>Wh per day</b> as the headline, recorded permanently. Everything below is background.</div>
-<h2 style="color:#4ade80">THE SIMPLE VERSION — build it in 10 steps</h2>
-<div class="rule info"><b>UPDATE — you have the screw-terminal shield (the green board): even easier.</b> Forget the breadboard for connections — every ESP pin is a labelled screw terminal. The build becomes:
-<br>· <b>Battery power:</b> BAT+ wire into the terminal marked <code>5Vin</code>, battery − into <code>GND</code>. Done — no rails.
-<br>· <b>Divider A (panel):</b> twist one leg of the 100k and one leg of the 22k together with a short wire and screw all three into terminal <code>6</code>. The 100k's other leg goes to panel +, the 22k's other leg into a <code>GND</code> terminal.
-<br>· <b>Divider B (battery):</b> same trick into terminal <code>4</code> — 100k's far leg to <code>5Vin</code>'s wire (BAT+), 22k's far leg to <code>GND</code>.
-<br>· <b>Charge sense:</b> 10k from the CN3791 CHRG pad, its other leg into terminal <code>5</code>.
-<br>All three signals sit on neighbouring terminals <code>4 · 5 · 6</code>. Screw terminals grip resistor legs properly — this will survive the IP67 box far better than any breadboard. The diagrams below still show the breadboard version; the electrical connections are identical.</div>
-<div class="rule"><b>Big picture:</b> your solar → charger → battery wiring from the unit rig <b>does not change at all</b>. You are only ADDING the logger: the ESP board, 5 resistors and 8 wires. If a step says a colour band, that's the stripes painted on the resistor.</div>
+<h2>Step 0 — one bit of soldering</h2>
+<div class="rule">The INA219 board arrives with its <b>6-pin header loose in the bag</b>. Solder the header into the row of 6 small holes (pins pointing up). Five minutes, same as the sensor wiring you've done before. The two big screw terminals need nothing.</div>
 
+<h2>The wiring — 7 wires total</h2>
 <svg viewBox="0 0 1000 560" font-family="-apple-system,sans-serif">
-<defs><marker id="s" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
-<!-- existing rig -->
-<rect x="30" y="30" width="380" height="120" rx="12" fill="#20362a" stroke="#4ade80" stroke-width="2"/>
-<text x="220" y="60" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">YOUR EXISTING RIG — DON'T TOUCH</text>
-<text x="220" y="85" fill="#9c9" text-anchor="middle" font-size="12">panel → CN3791 → 18650 in holder</text>
-<text x="220" y="106" fill="#9c9" text-anchor="middle" font-size="12">exactly as it is on the bench today</text>
-<text x="220" y="132" fill="#4ade80" text-anchor="middle" font-size="11" font-weight="700">one panel, one charger, one battery — as-is</text>
-
-<!-- rails -->
-<rect x="470" y="30" width="22" height="500" rx="5" fill="#3a2020"/>
-<text x="481" y="550" fill="#f87171" text-anchor="middle" font-size="13" font-weight="700">RED rail</text>
-<rect x="520" y="30" width="22" height="500" rx="5" fill="#2a2a32"/>
-<text x="531" y="550" fill="#aaa" text-anchor="middle" font-size="13" font-weight="700">BLUE rail</text>
-
-<!-- step wires from rig to rails -->
-<line x1="410" y1="70" x2="470" y2="70" stroke="#f87171" stroke-width="5" marker-end="url(#s)"/>
-<text x="435" y="60" fill="#f87171" font-size="12" font-weight="700">1</text>
-<line x1="410" y1="110" x2="520" y2="110" stroke="#aaa" stroke-width="5" marker-end="url(#s)"/>
-<text x="435" y="100" fill="#aaa" font-size="12" font-weight="700">2</text>
-
-<!-- ESP -->
-<rect x="640" y="30" width="330" height="330" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
-<text x="805" y="60" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">ESP32 board</text>
-<g font-size="13" font-weight="700">
-<rect x="655" y="80" width="86" height="28" rx="5" fill="#3a2020"/><text x="698" y="99" fill="#f87171" text-anchor="middle">5V</text>
-<rect x="655" y="118" width="86" height="28" rx="5" fill="#333"/><text x="698" y="137" fill="#ccc" text-anchor="middle">GND</text>
-<rect x="655" y="156" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="175" fill="#4ade80" text-anchor="middle">GPIO6</text>
-<rect x="655" y="194" width="86" height="28" rx="5" fill="#20362a"/><text x="698" y="213" fill="#4ade80" text-anchor="middle">GPIO4</text>
-<rect x="655" y="232" width="86" height="28" rx="5" fill="#3a2e1c"/><text x="698" y="251" fill="#fb923c" text-anchor="middle">GPIO5</text>
-</g>
-<text x="760" y="99" fill="#9fb3c8" font-size="11">← wire 3, from RED rail</text>
-<text x="760" y="137" fill="#9fb3c8" font-size="11">← wire 4, from BLUE rail</text>
-<text x="760" y="175" fill="#9fb3c8" font-size="11">← wire 7, from meeting point A</text>
-<text x="760" y="213" fill="#9fb3c8" font-size="11">← wire 8, from meeting point B</text>
-<text x="760" y="251" fill="#9fb3c8" font-size="11">← wire 9, from the 10k resistor</text>
-<text x="805" y="300" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">read the names printed on the board —</text>
-<text x="805" y="318" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">never count pins</text>
-<text x="805" y="344" fill="#888" text-anchor="middle" font-size="10">plug nothing else into it</text>
-
-<!-- resistor legend -->
-<rect x="30" y="200" width="380 " height="330" rx="12" fill="#26262e" stroke="#555"/>
-<text x="220" y="230" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">The 5 resistors — find them by their stripes</text>
-<!-- 100k -->
-<rect x="60" y="255" width="90" height="22" rx="8" fill="#c9b18a"/>
-<rect x="72" y="255" width="8" height="22" fill="#7a4a1e"/><rect x="88" y="255" width="8" height="22" fill="#111"/><rect x="104" y="255" width="8" height="22" fill="#e8d426"/><rect x="124" y="255" width="8" height="22" fill="#d4a017"/>
-<text x="170" y="272" fill="#ddd" font-size="12"><tspan font-weight="700">100k ×2</tspan> — brown, black, YELLOW</text>
-<!-- 22k -->
-<rect x="60" y="295" width="90" height="22" rx="8" fill="#c9b18a"/>
-<rect x="72" y="295" width="8" height="22" fill="#c0392b"/><rect x="88" y="295" width="8" height="22" fill="#c0392b"/><rect x="104" y="295" width="8" height="22" fill="#e67e22"/><rect x="124" y="295" width="8" height="22" fill="#d4a017"/>
-<text x="170" y="312" fill="#ddd" font-size="12"><tspan font-weight="700">22k ×2</tspan> — red, red, ORANGE</text>
-<!-- 10k -->
-<rect x="60" y="335" width="90" height="22" rx="8" fill="#c9b18a"/>
-<rect x="72" y="335" width="8" height="22" fill="#7a4a1e"/><rect x="88" y="335" width="8" height="22" fill="#111"/><rect x="104" y="335" width="8" height="22" fill="#e67e22"/><rect x="124" y="335" width="8" height="22" fill="#d4a017"/>
-<text x="170" y="352" fill="#ddd" font-size="12"><tspan font-weight="700">10k ×1</tspan> — brown, black, ORANGE</text>
-<text x="60" y="392" fill="#888" font-size="11">100k and 10k look similar — the 3rd stripe is the tell:</text>
-<text x="60" y="410" fill="#888" font-size="11">YELLOW = 100k, ORANGE = 10k. Torch helps.</text>
-<text x="60" y="444" fill="#eee" font-size="12" font-weight="700">"Meeting point" = one breadboard row where</text>
-<text x="60" y="462" fill="#eee" font-size="12" font-weight="700">two resistor legs + one wire share the holes.</text>
-<text x="60" y="490" fill="#888" font-size="11">Meeting point A lives in any empty row. So does B.</text>
-<text x="60" y="508" fill="#888" font-size="11">They must be different rows, away from each other.</text>
-</svg>
-
-<h3>The 10 steps, in order — battery OUT of the holder until step 10</h3>
-<table>
-<tr><th>#</th><th>Do this</th></tr>
-<tr><td>1</td><td>Wire from the battery holder's <b>red</b> lead junction → breadboard <b>RED rail</b></td></tr>
-<tr><td>2</td><td>Wire from the battery holder's <b>black</b> lead junction → breadboard <b>BLUE rail</b></td></tr>
-<tr><td>3</td><td>Wire: RED rail → ESP pin printed <code>5V</code></td></tr>
-<tr><td>4</td><td>Wire: BLUE rail → ESP pin printed <code>GND</code></td></tr>
-<tr><td>5</td><td><b>Divider A:</b> 100k (yellow stripe) — one leg in the row where the <b>panel + wire</b> arrives, other leg into an empty row = <b>meeting point A</b>. Then 22k (red-red-orange) — one leg into meeting point A, other leg to the BLUE rail</td></tr>
-<tr><td>6</td><td><b>Divider B:</b> the other 100k — one leg on the RED rail, other leg into a different empty row = <b>meeting point B</b>. The other 22k — one leg into meeting point B, other leg to the BLUE rail</td></tr>
-<tr><td>7</td><td>Wire: meeting point A → ESP <code>GPIO6</code></td></tr>
-<tr><td>8</td><td>Wire: meeting point B → ESP <code>GPIO4</code></td></tr>
-<tr><td>9</td><td>The 10k (brown-black-orange): one leg soldered/hooked to the CN3791's <b>CHRG</b> LED pad, the other leg to a wire → ESP <code>GPIO5</code></td></tr>
-<tr><td>10</td><td>Look over steps 1–9 once more, then battery into the holder. ESP light flickers = alive. Photo → me → I flash it from here (or you run one command)</td></tr>
-</table>
-
-<div class="rule warn"><b>Only three ways to get this wrong:</b> panel or battery + wired straight to a GPIO without going through its resistor pair (steps 5–6 exist for a reason) · the 10k missing from step 9 · USB plugged in while wire 3 is connected (pull wire 3 off the 5V pin whenever USB goes in).</div>
-
-<div class="rule info">Everything below this line is the same build in full engineering detail — for checking, not for following.</div>
-<hr style="border:none;border-top:1px solid #333;margin:26px 0">
-<h2>1 · The power spine (unchanged from the unit rig — one panel)</h2>
-<svg viewBox="0 0 1000 430" font-family="-apple-system,sans-serif">
 <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
-<!-- three panels -->
-<g>
-<rect x="30" y="30" width="130" height="70" rx="9" fill="#2e2a1c" stroke="#eab308"/>
-<text x="95" y="58" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">Solar panel</text>
-<text x="95" y="76" fill="#ca8" text-anchor="middle" font-size="10">6 V ~150 mA</text>
-</g>
-<line x1="160" y1="65" x2="230" y2="65" stroke="#eab308" stroke-width="3"/>
-<line x1="230" y1="65" x2="230" y2="150" stroke="#eab308" stroke-width="3"/>
-<line x1="230" y1="150" x2="420" y2="150" stroke="#eab308" stroke-width="4" marker-end="url(#a)"/>
-<!-- CN3791 -->
-<rect x="420" y="95" width="210" height="120" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="2"/>
-<text x="525" y="123" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">CN3791 charger</text>
-<text x="525" y="143" fill="#ca8" text-anchor="middle" font-size="10">PV+/PV− in · B+/B− out</text>
-<text x="525" y="161" fill="#ca8" text-anchor="middle" font-size="10">well within its limits at one panel</text>
-<text x="525" y="182" fill="#fb923c" text-anchor="middle" font-size="10" font-weight="700">CHRG LED pad = charge-state output</text>
-<text x="525" y="199" fill="#edc" text-anchor="middle" font-size="10">(used in section 3)</text>
-<!-- battery -->
-<line x1="630" y1="150" x2="710" y2="150" stroke="#4ade80" stroke-width="4" marker-end="url(#a)"/>
-<rect x="710" y="95" width="180" height="120" rx="10" fill="#20362a" stroke="#4ade80" stroke-width="1.5"/>
-<text x="800" y="125" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">18650 in holder</text>
-<text x="800" y="145" fill="#9c9" text-anchor="middle" font-size="10">B+ → holder red</text>
-<text x="800" y="161" fill="#9c9" text-anchor="middle" font-size="10">B− → holder black</text>
-<text x="800" y="182" fill="#4ade80" text-anchor="middle" font-size="10" font-weight="700">this cell also powers the ESP</text>
-<text x="800" y="198" fill="#9c9" text-anchor="middle" font-size="10">(section 2)</text>
-</svg>
 
-<h2>2 · The logger — every wire, pin by pin</h2>
-<svg viewBox="0 0 1000 720" font-family="-apple-system,sans-serif">
-<defs><marker id="b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
-<!-- breadboard -->
-<rect x="30" y="40" width="420" height="640" rx="12" fill="#26262e" stroke="#666"/>
-<text x="240" y="68" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">Breadboard</text>
-<!-- rails -->
-<rect x="55" y="90" width="14" height="560" rx="4" fill="#3a2020"/>
-<text x="62" y="672" fill="#f87171" text-anchor="middle" font-size="12" font-weight="700">+ rail</text>
-<rect x="85" y="90" width="14" height="560" rx="4" fill="#2a2a32"/>
-<text x="92" y="672" fill="#ccc" text-anchor="middle" font-size="12" font-weight="700">− rail</text>
-<text x="62" y="82" fill="#f87171" text-anchor="middle" font-size="10">= BAT+</text>
-<text x="95" y="82" fill="#ccc" text-anchor="middle" font-size="10">= GND, everything's</text>
-<!-- divider 1 -->
-<rect x="130" y="110" width="290" height="120" rx="9" fill="#1b1b20" stroke="#4ade80"/>
-<text x="275" y="132" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">DIVIDER A — panel voltage</text>
-<text x="145" y="156" fill="#ddd" font-size="11">PANEL+ bus ──[ 100k ]──●──[ 22k ]── GND rail</text>
-<text x="255" y="178" fill="#4ade80" font-size="11" font-weight="700">● tap → GPIO1</text>
-<text x="145" y="202" fill="#888" font-size="10">both resistors share one breadboard row at the tap —</text>
-<text x="145" y="218" fill="#888" font-size="10">that row is the only place the GPIO wire goes</text>
-<!-- divider 2 -->
-<rect x="130" y="250" width="290" height="120" rx="9" fill="#1b1b20" stroke="#4ade80"/>
-<text x="275" y="272" fill="#4ade80" text-anchor="middle" font-size="12" font-weight="700">DIVIDER B — battery voltage</text>
-<text x="145" y="296" fill="#ddd" font-size="11">+ rail (BAT+) ──[ 100k ]──●──[ 22k ]── GND rail</text>
-<text x="255" y="318" fill="#4ade80" font-size="11" font-weight="700">● tap → GPIO4</text>
-<text x="145" y="342" fill="#888" font-size="10">any resistor pair ≥3:1 works — then set the YAML</text>
-<text x="145" y="358" fill="#888" font-size="10">multiply: to (Rtop+Rbot)/Rbot for THAT pair</text>
-<!-- chg sense -->
-<rect x="130" y="390" width="290" height="110" rx="9" fill="#1b1b20" stroke="#fb923c"/>
-<text x="275" y="412" fill="#fb923c" text-anchor="middle" font-size="12" font-weight="700">CHARGE SENSE</text>
-<text x="145" y="436" fill="#ddd" font-size="11">CN3791 CHRG pad ──[ 10k ]── GPIO5</text>
-<text x="145" y="458" fill="#888" font-size="10">solder one end of the 10k's lead to the CHRG LED pad</text>
-<text x="145" y="474" fill="#888" font-size="10">(the LED leg on the IC side), other end to a jumper row</text>
-<text x="145" y="492" fill="#f87171" font-size="10" font-weight="700">the 10k is mandatory — node floats ~4 V when idle</text>
-<!-- ina219 future -->
-<rect x="130" y="520" width="290" height="120" rx="9" fill="#1b1b20" stroke="#60a5fa" stroke-dasharray="7 5"/>
-<text x="275" y="542" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">INA219 — reserved seat (on order)</text>
-<text x="145" y="566" fill="#ddd" font-size="11">Panel + ── VIN+ · VIN− ── CN3791 PV+</text>
-<text x="145" y="586" fill="#ddd" font-size="11">VCC←3V3 · GND←GND · SDA→GPIO8 · SCL→GPIO9</text>
-<text x="145" y="608" fill="#888" font-size="10">sits IN the panel + lead (high side, its design)</text>
-<text x="145" y="624" fill="#888" font-size="10">then uncomment its YAML block — true W and Wh/day</text>
+<!-- panel -->
+<rect x="30" y="40" width="150" height="80" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
+<text x="105" y="72" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">Solar panel</text>
+<text x="105" y="92" fill="#ca8" text-anchor="middle" font-size="10">6 V · 80×80</text>
+
+<!-- INA219 -->
+<rect x="280" y="20" width="240" height="180" rx="12" fill="#1c2331" stroke="#60a5fa" stroke-width="2"/>
+<text x="400" y="48" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">INA219</text>
+<rect x="295" y="65" width="90" height="26" rx="5" fill="#333"/><text x="340" y="83" fill="#eab308" text-anchor="middle" font-size="12" font-weight="700">VIN+ (screw)</text>
+<rect x="295" y="100" width="90" height="26" rx="5" fill="#333"/><text x="340" y="118" fill="#eab308" text-anchor="middle" font-size="12" font-weight="700">VIN− (screw)</text>
+<text x="475" y="83" fill="#9fb3c8" font-size="10" text-anchor="end">← wire 1: panel +</text>
+<text x="475" y="118" fill="#9fb3c8" font-size="10" text-anchor="end">→ wire 2: to charger</text>
+<g font-size="11" font-weight="700">
+<rect x="295" y="135" width="52" height="22" rx="4" fill="#3a2020"/><text x="321" y="151" fill="#f87171" text-anchor="middle">VCC</text>
+<rect x="352" y="135" width="52" height="22" rx="4" fill="#2a2a32"/><text x="378" y="151" fill="#ccc" text-anchor="middle">GND</text>
+<rect x="409" y="135" width="52" height="22" rx="4" fill="#1e3a5f"/><text x="435" y="151" fill="#60a5fa" text-anchor="middle">SDA</text>
+<rect x="295" y="165" width="52" height="22" rx="4" fill="#2e2440"/><text x="321" y="181" fill="#a78bfa" text-anchor="middle">SCL</text>
+</g>
+<line x1="180" y1="78" x2="295" y2="78" stroke="#eab308" stroke-width="4" marker-end="url(#a)"/>
+
+<!-- CN3791 + battery -->
+<rect x="620" y="40" width="170" height="80" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
+<text x="705" y="70" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">CN3791</text>
+<text x="705" y="90" fill="#ca8" text-anchor="middle" font-size="10">wire 2 → PV+ · panel − → PV−</text>
+<line x1="385" y1="113" x2="620" y2="90" stroke="#eab308" stroke-width="4" marker-end="url(#a)"/>
+<rect x="840" y="40" width="130" height="80" rx="10" fill="#20362a" stroke="#4ade80" stroke-width="1.5"/>
+<text x="905" y="72" fill="#eee" text-anchor="middle" font-size="12" font-weight="700">18650</text>
+<text x="905" y="92" fill="#9c9" text-anchor="middle" font-size="10">B+/B− as always</text>
+<line x1="790" y1="80" x2="840" y2="80" stroke="#4ade80" stroke-width="3.5" marker-end="url(#a)"/>
+
+<!-- panel minus direct -->
+<path d="M105 120 L105 250 L705 250 L705 120" stroke="#888" stroke-width="3" fill="none" stroke-dasharray="8 5"/>
+<text x="400" y="242" fill="#888" font-size="10" text-anchor="middle">wire 3: panel − straight to CN3791 PV− (the INA only sits in the + line)</text>
 
 <!-- ESP -->
-<rect x="520" y="60" width="440" height="420" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
-<text x="740" y="90" fill="#eee" text-anchor="middle" font-size="15" font-weight="700">ESP32-S3-DevKitC</text>
-<text x="740" y="110" fill="#7ab7ff" text-anchor="middle" font-size="10">USB-C ports face DOWN in this drawing · pins named on the silkscreen — read them, don't count</text>
+<rect x="280" y="300" width="440" height="220" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
+<text x="500" y="330" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">ESP32-S3 on the screw-terminal shield</text>
 <g font-size="12" font-weight="700">
-<rect x="540" y="130" width="80" height="26" rx="5" fill="#3a2020"/><text x="580" y="148" fill="#f87171" text-anchor="middle">5V</text>
-<rect x="540" y="166" width="80" height="26" rx="5" fill="#333"/><text x="580" y="184" fill="#ccc" text-anchor="middle">GND</text>
-<rect x="540" y="202" width="80" height="26" rx="5" fill="#20362a"/><text x="580" y="220" fill="#4ade80" text-anchor="middle">GPIO6</text>
-<rect x="540" y="238" width="80" height="26" rx="5" fill="#20362a"/><text x="580" y="256" fill="#4ade80" text-anchor="middle">GPIO4</text>
-<rect x="540" y="274" width="80" height="26" rx="5" fill="#3a2e1c"/><text x="580" y="292" fill="#fb923c" text-anchor="middle">GPIO5</text>
-<rect x="540" y="310" width="80" height="26" rx="5" fill="#1e3a5f"/><text x="580" y="328" fill="#60a5fa" text-anchor="middle">GPIO8</text>
-<rect x="540" y="346" width="80" height="26" rx="5" fill="#1e3a5f"/><text x="580" y="364" fill="#60a5fa" text-anchor="middle">GPIO9</text>
-<rect x="540" y="382" width="80" height="26" rx="5" fill="#3a2020"/><text x="580" y="400" fill="#f87171" text-anchor="middle">3V3</text>
+<rect x="300" y="350" width="86" height="26" rx="5" fill="#3a2020"/><text x="343" y="368" fill="#f87171" text-anchor="middle">3V3</text>
+<rect x="300" y="385" width="86" height="26" rx="5" fill="#2a2a32"/><text x="343" y="403" fill="#ccc" text-anchor="middle">GND</text>
+<rect x="300" y="420" width="86" height="26" rx="5" fill="#1e3a5f"/><text x="343" y="438" fill="#60a5fa" text-anchor="middle">8</text>
+<rect x="300" y="455" width="86" height="26" rx="5" fill="#2e2440"/><text x="343" y="473" fill="#a78bfa" text-anchor="middle">9</text>
 </g>
 <g font-size="11" fill="#9fb3c8">
-<text x="640" y="148">← + rail (BAT+). The onboard regulator makes 3.3 V from 3.5–4.2 V happily</text>
-<text x="640" y="184">← − rail. THE common ground — without it every reading is garbage</text>
-<text x="640" y="220">← Divider A tap (panel V)</text>
-<text x="640" y="256">← Divider B tap (battery V)</text>
-<text x="640" y="292">← 10k from CHRG pad (charging yes/no)</text>
-<text x="640" y="328">← (future) INA219 SDA</text>
-<text x="640" y="364">← (future) INA219 SCL</text>
-<text x="640" y="400">← (future) INA219 VCC — 3.3 V, NOT 5V pin</text>
+<text x="400" y="368">← wire 4 → INA VCC</text>
+<text x="400" y="403">← wire 5 → INA GND &nbsp;&nbsp;+&nbsp; wire 6 → battery − (see red box)</text>
+<text x="400" y="438">← wire 7a → INA SDA</text>
+<text x="400" y="473">← wire 7b → INA SCL</text>
 </g>
-<text x="740" y="440" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">Do not back-power via USB while the 5V pin is on the battery rail —</text>
-<text x="740" y="458" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700">unplug the battery rail wire from 5V before any USB flash session</text>
-
-<!-- wire count -->
-<rect x="520" y="510" width="440" height="170" rx="12" fill="#26262e" stroke="#555"/>
-<text x="540" y="538" fill="#eee" font-size="13" font-weight="700">Total wire count (today's build): 8</text>
-<g font-size="11" fill="#bbb">
-<text x="540" y="562">2 × power: + rail → 5V pin, − rail → GND pin</text>
-<text x="540" y="582">2 × divider taps → GPIO1, GPIO4</text>
-<text x="540" y="602">1 × CHRG sense (with its 10k) → GPIO5</text>
-<text x="540" y="622">1 × PANEL+ bus → Divider A top</text>
-<text x="540" y="642">1 × BAT+ → + rail · 1 × battery − → − rail</text>
-<text x="540" y="662">(+4 more when the INA219 arrives)</text>
-</g>
+<text x="500" y="505" fill="#7ab7ff" font-size="11" text-anchor="middle">power the ESP from a USB wall charger — simplest for this rig</text>
 </svg>
 
-<h3>Every connection as a checklist</h3>
+<h2>Wire list</h2>
 <table>
-<tr><th>#</th><th>From</th><th>To</th><th>Wire / part</th><th>Check before power</th></tr>
-<tr><td>1</td><td>Panel <b>+</b> lead</td><td>a spare breadboard row = the PANEL+ row</td><td>panel lead</td><td>panel covered / face-down while wiring</td></tr>
-<tr><td>2</td><td>Panel <b>−</b> lead</td><td>breadboard <b>− rail</b></td><td>panel lead</td><td>—</td></tr>
-<tr><td>3</td><td>PANEL+ row</td><td>CN3791 <code>PV+</code></td><td>jumper</td><td><span class="w">not the BAT side</span> — read the silkscreen</td></tr>
-<tr><td>4</td><td>− rail</td><td>CN3791 <code>PV−</code></td><td>jumper</td><td>—</td></tr>
-<tr><td>5</td><td>CN3791 <code>B+</code> / <code>B−</code></td><td>18650 holder red / black</td><td>holder leads</td><td>polarity twice — reverse kills the board</td></tr>
-<tr><td>6</td><td>Holder red (BAT+)</td><td>breadboard <b>+ rail</b></td><td>jumper</td><td>—</td></tr>
-<tr><td>7</td><td>Holder black</td><td>breadboard <b>− rail</b></td><td>jumper</td><td>one ground, everything on it</td></tr>
-<tr><td>8</td><td>+ rail</td><td>ESP <code>5V</code> pin</td><td>jumper</td><td><span class="w">pull this before any USB flashing</span></td></tr>
-<tr><td>9</td><td>− rail</td><td>ESP <code>GND</code> pin</td><td>jumper</td><td>—</td></tr>
-<tr><td>10</td><td>PANEL+ row</td><td>100k → tap ● → 22k → − rail</td><td>Divider A</td><td>tap row holds: 100k end, 22k end, GPIO wire — nothing else</td></tr>
-<tr><td>11</td><td>Divider A tap ●</td><td>ESP <code>GPIO6</code></td><td>jumper</td><td>—</td></tr>
-<tr><td>12</td><td>+ rail (BAT+)</td><td>100k → tap ● → 22k → − rail</td><td>Divider B</td><td>—</td></tr>
-<tr><td>13</td><td>Divider B tap ●</td><td>ESP <code>GPIO4</code></td><td>jumper</td><td>—</td></tr>
-<tr><td>14</td><td>CN3791 <code>CHRG</code> LED pad (IC side)</td><td>10k → ESP <code>GPIO5</code></td><td>10k + jumper</td><td><span class="w">10k is mandatory</span> — node floats ~4 V idle</td></tr>
+<tr><th>#</th><th>From</th><th>To</th></tr>
+<tr><td>1</td><td>Panel <b>+</b> lead</td><td>INA219 <code>VIN+</code> screw</td></tr>
+<tr><td>2</td><td>INA219 <code>VIN−</code> screw</td><td>CN3791 <code>PV+</code></td></tr>
+<tr><td>3</td><td>Panel <b>−</b> lead</td><td>CN3791 <code>PV−</code> (straight through, INA not involved)</td></tr>
+<tr><td>4</td><td>Shield <code>3V3</code></td><td>INA219 <code>VCC</code></td></tr>
+<tr><td>5</td><td>Shield <code>GND</code></td><td>INA219 <code>GND</code></td></tr>
+<tr><td>6</td><td>Shield <code>GND</code> (same terminal, second wire)</td><td>Battery <b>−</b> / CN3791 ground side</td></tr>
+<tr><td>7</td><td>Shield <code>8</code> → INA <code>SDA</code></td><td>Shield <code>9</code> → INA <code>SCL</code></td></tr>
 </table>
 
-<h2>3 · Power-up sequence</h2>
+<div class="rule warn"><b>Two rules:</b> wire 6 is not optional — without the shared ground the voltage numbers are garbage. And direction matters on the meter: panel side into <code>VIN+</code>, charger side out of <code>VIN−</code>, or every current reading comes out negative.</div>
+
+<div class="rule info"><b>Power:</b> USB wall charger into the ESP. Don't ALSO feed the shield's 5Vin from the battery at the same time — one or the other.</div>
+
+<h2>Then</h2>
 <table>
-<tr><th>#</th><th>Step</th><th>You know it worked when…</th></tr>
-<tr><td>1</td><td>All 14 rows above wired, cell OUT, panels covered</td><td>meter continuity: + rail to − rail is NOT a short</td></tr>
-<tr><td>2</td><td>Cell into holder</td><td>ESP LED flickers — it's booting off the cell</td></tr>
-<tr><td>3</td><td>First flash is over USB: <b>pull the 5V-pin wire first</b>, plug USB, <code>esphome run solar-test/solar-logger.yaml</code>, replace the wire after</td><td>"Solar Test Rig" appears in HA with 3 entities</td></tr>
-<tr><td>4</td><td>Uncover the panel / put the rig in sun</td><td>panel V jumps to ~6 V, <b>Solar Charging flips on</b> in HA</td></tr>
-<tr><td>5</td><td>Calibrate: multimeter across battery vs HA's battery V</td><td>tweak the two <code>multiply:</code> values until they agree; same for panel V</td></tr>
-<tr><td>6</td><td>Into the IP67 box — panel outside on/near the lid, glands sealed, box in its final spot</td><td>still reporting from there (WiFi check on your phone)</td></tr>
-<tr><td>7</td><td>7-day soak, hands off</td><td>HA history: charging-hours per day + battery curve. INA219 later upgrades the same chart to true Wh/day</td></tr>
+<tr><td>1</td><td>USB into the Mac once — say the word and I flash <code>solar-logger.yaml</code> from here</td></tr>
+<tr><td>2</td><td>Move to wall charger, panel in the sun → HA shows volts, mA, W live; the portal's live section fills from the permanent record</td></tr>
+<tr><td>3</td><td>Seal in the IP67 box, panel out, leave it. <b>"Solar Harvest Today (Wh)"</b> is the number the whole test exists for</td></tr>
 </table>
 
-<div class="rule warn"><b>Three ways to let the smoke out, avoided:</b> 6 V panel voltage straight into a GPIO (always through Divider A) · USB and battery-rail-to-5V at the same time (pull the 5V wire when flashing) · CHRG pad without its 10k (node sits ~4 V when idle).</div>
-
-<div class="rule info"><b>Deep-sleep gotcha, so it doesn't surprise you:</b> the ESP is only awake 25 s in every 5 min. To reflash later, either catch it awake (watch HA for the entities updating) or flip the <code>prevent deep sleep</code> switch ESPHome creates in HA, then flash on the next wake.</div>
-
-<div class="rule"><b>Recording:</b> three HA entities — panel V, battery V, Solar Charging on/off. History gives charging-hours/day and the battery curve; that's the panel verdict. Config: <code>solar-test/solar-logger.yaml</code> (INA219 block ready, commented out).</div>
-
-
-<h2>4 · Live results — from the permanent record</h2>
-<div class="rule info"><b>Where the data really lives:</b> every 5-minute wake writes one row to the fleet database (same Supabase as unit 3's packets) — no retention limit, survives HA purges, readable from anywhere. Below: the most recent days, straight from that table.</div>
+<h2>Live results — from the permanent record</h2>
 <div id="solar-live" class="sub">loading the record…</div>
 <script>
 (async () => {
@@ -275,25 +114,22 @@ th{color:#999;font-size:11px;text-transform:uppercase}
     const days = {};
     for (const x of rows) {
       const d = new Date(x.received_at).toLocaleDateString('en-AU',{day:'2-digit',month:'short'});
-      (days[d] ||= {chg:0,n:0,vmin:99,vmax:0});
-      const D = days[d];
-      D.n++; if (x.charging) D.chg++;
-      if (x.batt_v>0.5){ D.vmin=Math.min(D.vmin,x.batt_v); D.vmax=Math.max(D.vmax,x.batt_v); }
+      (days[d] ||= {n:0,wmax:0,wsum:0});
+      const D = days[d]; D.n++;
+      const w = x.batt_v || 0;   // watts ride in this column for now
+      D.wmax=Math.max(D.wmax,w); D.wsum+=w;
     }
     const latest = rows[0];
-    let h = `<table><tr><th>Latest</th><th>Panel</th><th>Battery</th><th>Charging</th></tr>
+    let h = `<table><tr><th>Latest</th><th>Panel V</th><th>Power</th></tr>
       <tr><td>${new Date(latest.received_at).toLocaleString('en-AU')}</td>
-      <td>${latest.panel_v?.toFixed(2)} V</td><td>${latest.batt_v?.toFixed(2)} V</td>
-      <td>${latest.charging ? '<span style="color:#4ade80;font-weight:700">YES</span>' : 'no'}</td></tr></table>`;
-    h += '<table><tr><th>Day</th><th>Charging hours</th><th>Battery min–max</th><th></th></tr>';
-    for (const [d,D] of Object.entries(days)) {
-      const hrs = (D.chg*5/60).toFixed(1);
-      const bar = '<div style="background:#333;border-radius:4px;height:10px;width:100%"><div style="background:#4ade80;border-radius:4px;height:10px;width:'+Math.min(100,hrs/12*100)+'%"></div></div>';
-      h += `<tr><td>${d}</td><td>${hrs} h</td><td>${D.vmin<99 ? D.vmin.toFixed(2)+'–'+D.vmax.toFixed(2)+' V' : '—'}</td><td style="width:35%">${bar}</td></tr>`;
-    }
-    h += '</table><div class="sub">Showing the last ~1000 samples (~3½ days at 5-min cadence). The table itself keeps everything, forever.</div>';
+      <td>${latest.panel_v?.toFixed(2)} V</td><td>${latest.batt_v?.toFixed(2)} W</td></tr></table>`;
+    h += '<table><tr><th>Day</th><th>Peak W</th><th>Est. Wh (5-min samples)</th></tr>';
+    for (const [d,D] of Object.entries(days))
+      h += `<tr><td>${d}</td><td>${D.wmax.toFixed(2)}</td><td>${(D.wsum/12).toFixed(2)}</td></tr>`;
+    h += '</table><div class="sub">Last ~1000 samples shown; the database keeps everything.</div>';
     el.innerHTML = h;
   } catch(e){ el.textContent = 'record unreachable: ' + e; }
 })();
 </script>
+
 </body></html>
