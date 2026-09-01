@@ -15,14 +15,14 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 </style></head><body>
 
 <h1>Solar power logger — the INA219 build</h1>
-<div class="sub">Measures the panel's real volts, milliamps, watts · Wh per day charted forever · no resistors needed</div>
+<div class="sub">Measures the panel's real volts, milliamps, watts · Wh per day charted forever · no resistors · fully self-contained in the IP67 box</div>
 
 <div class="rule"><b>The idea in one line:</b> the INA219 sits in the panel's + wire like a water meter in a pipe — everything the panel produces flows through it and gets counted.</div>
 
 <h2>Step 0 — one bit of soldering</h2>
 <div class="rule">The INA219 board arrives with its <b>6-pin header loose in the bag</b>. Solder the header into the row of 6 small holes (pins pointing up). Five minutes, same as the sensor wiring you've done before. The two big screw terminals need nothing.</div>
 
-<h2>The wiring — 7 wires total</h2>
+<h2>The wiring — 8 wires total</h2>
 <svg viewBox="0 0 1000 560" font-family="-apple-system,sans-serif">
 <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#888"/></marker></defs>
 
@@ -75,7 +75,7 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <text x="400" y="438">← wire 7a → INA SDA</text>
 <text x="400" y="473">← wire 7b → INA SCL</text>
 </g>
-<text x="500" y="505" fill="#7ab7ff" font-size="11" text-anchor="middle">power the ESP from a USB wall charger — simplest for this rig</text>
+<text x="500" y="505" fill="#7ab7ff" font-size="11" text-anchor="middle">wire 8: battery + → shield 5Vin — the rig powers itself, no cords into the box</text>
 </svg>
 
 <h2>Wire list</h2>
@@ -88,16 +88,17 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <tr><td>5</td><td>Shield <code>GND</code></td><td>INA219 <code>GND</code></td></tr>
 <tr><td>6</td><td>Shield <code>GND</code> (same terminal, second wire)</td><td>Battery <b>−</b> / CN3791 ground side</td></tr>
 <tr><td>7</td><td>Shield <code>8</code> → INA <code>SDA</code></td><td>Shield <code>9</code> → INA <code>SCL</code></td></tr>
+<tr><td>8</td><td>Battery <b>+</b> node</td><td>Shield <code>5Vin</code> (pull this whenever USB is plugged in)</td></tr>
 </table>
 
 <div class="rule warn"><b>Two rules:</b> wire 6 is not optional — without the shared ground the voltage numbers are garbage. And direction matters on the meter: panel side into <code>VIN+</code>, charger side out of <code>VIN−</code>, or every current reading comes out negative.</div>
 
-<div class="rule info"><b>Power:</b> USB wall charger into the ESP. Don't ALSO feed the shield's 5Vin from the battery at the same time — one or the other.</div>
+<div class="rule info"><b>Power — self-contained, no cords:</b> one more wire: <b>battery + → the shield's <code>5Vin</code> terminal</b> (ground is already shared via wire 6). The ESP runs off the rig's own 18650 and the firmware deep-sleeps between 5-minute readings so the panel easily sustains it. <b>The one rule:</b> whenever USB goes in for flashing, pull the 5Vin wire out first — never both at once.</div>
 
 <h2>Then</h2>
 <table>
 <tr><td>1</td><td>USB into the Mac once — say the word and I flash <code>solar-logger.yaml</code> from here</td></tr>
-<tr><td>2</td><td>Move to wall charger, panel in the sun → HA shows volts, mA, W live; the portal's live section fills from the permanent record</td></tr>
+<tr><td>2</td><td>Unplug USB, reconnect the 5Vin wire, panel in the sun → HA shows volts, mA, W live; the portal's live section fills from the permanent record</td></tr>
 <tr><td>3</td><td>Seal in the IP67 box, panel out, leave it. <b>"Solar Harvest Today (Wh)"</b> is the number the whole test exists for</td></tr>
 </table>
 
