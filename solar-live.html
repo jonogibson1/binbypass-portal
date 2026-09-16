@@ -1,0 +1,124 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass — solar rig live</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:16px;max-width:900px;margin:auto;line-height:1.5}
+h1{font-size:21px;margin:0 0 2px}h2{font-size:15px;margin:22px 0 8px;color:#7ab7ff}
+.sub{color:#999;font-size:13px}
+a{color:#7ab7ff}
+.status{border-radius:12px;padding:14px 16px;margin:14px 0;font-size:15px;font-weight:700}
+.ok{background:#1c2b22;border:1px solid #166534}
+.stale{background:#2b1c1c;border:1px solid #7f1d1d}
+.unknown{background:#1c2331;border:1px solid #1e40af}
+.status small{display:block;font-weight:400;color:#bbb;font-size:12.5px;margin-top:3px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
+.tile{background:#1b1b20;border:1px solid #2a2a32;border-radius:12px;padding:12px 14px}
+.tile .k{color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+.tile .v{font-size:24px;font-weight:700;margin-top:2px}
+.tile .u{font-size:12px;color:#999;margin-left:3px}
+canvas{width:100%;height:auto;display:block;background:#1b1b20;border-radius:14px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+td,th{padding:7px 10px;text-align:left;border-bottom:1px solid #333}
+th{color:#999;font-size:11px;text-transform:uppercase}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.foot{color:#777;font-size:12px;margin-top:20px}
+.legend{font-size:12px;color:#aaa;margin:4px 0}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px;vertical-align:middle}
+</style></head><body>
+
+<h1>Solar rig — live</h1>
+<div class="sub">80×80 6V panel · INA219 in the panel + lead · Supabase record · <a href="solar.html">build guide</a></div>
+
+<div id="status" class="status unknown">Loading…</div>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Panel volts</div><div class="v"><span id="v">–</span><span class="u">V</span></div></div>
+  <div class="tile"><div class="k">Current</div><div class="v"><span id="i">–</span><span class="u">mA</span></div></div>
+  <div class="tile"><div class="k">Power</div><div class="v"><span id="w">–</span><span class="u">W</span></div></div>
+  <div class="tile"><div class="k">Today so far</div><div class="v"><span id="wh">–</span><span class="u">Wh</span></div></div>
+</div>
+
+<h2>Last 24 hours</h2>
+<div class="legend"><b style="background:#eab308"></b>panel volts (left axis) <b style="background:#4ade80"></b>watts (right axis)</div>
+<canvas id="chart" width="900" height="300"></canvas>
+
+<h2>Per day</h2>
+<table><thead><tr><th>Day</th><th class="n">Samples</th><th class="n">Peak W</th><th class="n">Peak V</th><th class="n">Est. Wh</th><th class="n">Hours logged</th></tr></thead>
+<tbody id="days"><tr><td colspan="6" class="sub">loading…</td></tr></tbody></table>
+
+<div class="foot">Auto-refreshes every 30 s · <span id="upd">–</span> · all times local · Wh = average W × hours logged that day</div>
+
+<script>
+const URL_ = "https://kyjrqpibtncvhxwcaovx.supabase.co/rest/v1/solar_readings";
+const KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // publishable, read-only via RLS
+const $ = id => document.getElementById(id);
+
+function ts(s){ // tolerate 5/6-digit fractional seconds
+  s = s.replace("Z","+00:00");
+  const m = s.match(/^(.*?)(?:\.(\d+))?([+-]\d\d:\d\d)$/);
+  return new Date(m ? `${m[1]}.${(m[2]||"0").slice(0,3).padEnd(3,"0")}${m[3]}` : s);
+}
+const f2 = x => (x==null||isNaN(x)) ? "–" : x.toFixed(2);
+const day = d => d.toLocaleDateString("en-AU",{weekday:"short",day:"2-digit",month:"short"});
+const hm = d => d.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"});
+
+async function load(){
+  let rows;
+  try{
+    const r = await fetch(`${URL_}?select=received_at,panel_v,batt_v,charging&order=id.desc&limit=3000`,{headers:{apikey:KEY}});
+    rows = await r.json();
+    if(!Array.isArray(rows)) throw new Error(JSON.stringify(rows).slice(0,120));
+  }catch(e){
+    $("status").className="status stale"; $("status").innerHTML=`Record unreachable<small>${e}</small>`; return;
+  }
+  $("upd").textContent = "updated " + new Date().toLocaleTimeString("en-AU");
+  if(!rows.length){ $("status").className="status unknown"; $("status").textContent="No readings yet"; return; }
+
+  rows.forEach(x=>{ x.t=ts(x.received_at); x.v=+x.panel_v||0; x.w=+x.batt_v||0; x.i=x.v>0? x.w/x.v*1000:0; });
+  const latest = rows[0], now = new Date();
+  const ageS = (now-latest.t)/1000;
+
+  // expected cadence from recent gaps (bench 5s, production 300s)
+  const gaps=[]; for(let k=0;k<Math.min(rows.length-1,20);k++) gaps.push((rows[k].t-rows[k+1].t)/1000);
+  gaps.sort((a,b)=>a-b); const cadence = gaps.length? gaps[Math.floor(gaps.length/2)] : 300;
+  const staleAfter = Math.max(90, cadence*3);
+  const ageTxt = ageS<90 ? `${Math.round(ageS)} s ago` : ageS<5400 ? `${Math.round(ageS/60)} min ago` : `${(ageS/3600).toFixed(1)} h ago`;
+  if(ageS < staleAfter){
+    $("status").className="status ok";
+    $("status").innerHTML=`RECORDING<small>last reading ${ageTxt} · posting about every ${cadence<60? Math.round(cadence)+" s" : Math.round(cadence/60)+" min"}</small>`;
+  }else{
+    $("status").className="status stale";
+    $("status").innerHTML=`NOT RECORDING<small>last reading ${ageTxt} (${latest.t.toLocaleString("en-AU")}) — board off, off Wi-Fi, or asleep</small>`;
+  }
+  $("v").textContent=f2(latest.v); $("i").textContent=f2(latest.i); $("w").textContent=f2(latest.w);
+
+  // per-day
+  const days={};
+  for(const x of rows){ const k=x.t.toDateString(); (days[k] ||= {d:x.t,n:0,ws:0,wm:0,vm:0,first:x.t,last:x.t});
+    const D=days[k]; D.n++; D.ws+=x.w; D.wm=Math.max(D.wm,x.w); D.vm=Math.max(D.vm,x.v);
+    if(x.t<D.first) D.first=x.t; if(x.t>D.last) D.last=x.t; }
+  const list=Object.values(days).sort((a,b)=>b.d-a.d);
+  const wh = D => { const h=Math.max((D.last-D.first)/36e5,1e-9); return (D.ws/D.n)*h; };
+  $("days").innerHTML = list.map(D=>`<tr><td>${day(D.d)}</td><td class="n">${D.n}</td><td class="n">${D.wm.toFixed(3)}</td><td class="n">${D.vm.toFixed(2)}</td><td class="n">${wh(D).toFixed(3)}</td><td class="n">${((D.last-D.first)/36e5).toFixed(2)}</td></tr>`).join("");
+  const today = days[now.toDateString()]; $("wh").textContent = today ? wh(today).toFixed(3) : "0.000";
+
+  // chart: last 24 h
+  const cut = now - 24*3600e3;
+  const pts = rows.filter(x=>x.t>=cut).reverse();
+  const c=$("chart"), g=c.getContext("2d"), W=c.width, H=c.height, L=46, R=46, T=14, B=34;
+  g.clearRect(0,0,W,H); g.fillStyle="#1b1b20"; g.fillRect(0,0,W,H);
+  if(pts.length<2){ g.fillStyle="#777"; g.font="14px -apple-system,sans-serif"; g.fillText("no readings in the last 24 h", L, H/2); return; }
+  const t0=pts[0].t.getTime(), t1=pts[pts.length-1].t.getTime()||t0+1;
+  const vMax=Math.max(7,...pts.map(p=>p.v))*1.05, wMax=Math.max(0.05,...pts.map(p=>p.w))*1.1;
+  const X=t=>L+(t-t0)/(t1-t0||1)*(W-L-R), Yv=v=>T+(1-v/vMax)*(H-T-B), Yw=w=>T+(1-w/wMax)*(H-T-B);
+  g.strokeStyle="#2a2a32"; g.lineWidth=1; g.font="11px -apple-system,sans-serif"; g.fillStyle="#888";
+  for(let k=0;k<=4;k++){ const y=T+k*(H-T-B)/4; g.beginPath(); g.moveTo(L,y); g.lineTo(W-R,y); g.stroke();
+    g.textAlign="right"; g.fillStyle="#eab308"; g.fillText((vMax*(1-k/4)).toFixed(1)+"V", L-4, y+4);
+    g.textAlign="left"; g.fillStyle="#4ade80"; g.fillText((wMax*(1-k/4)).toFixed(2)+"W", W-R+4, y+4); }
+  g.fillStyle="#888"; g.textAlign="center";
+  for(let k=0;k<=6;k++){ const t=t0+k*(t1-t0)/6; g.fillText(hm(new Date(t)), X(t), H-10); }
+  const line=(key,Y,col)=>{ g.strokeStyle=col; g.lineWidth=2; g.beginPath(); pts.forEach((p,i)=>{ const x=X(p.t.getTime()), y=Y(p[key]); i?g.lineTo(x,y):g.moveTo(x,y); }); g.stroke(); };
+  line("v",Yv,"#eab308"); line("w",Yw,"#4ade80");
+}
+load(); setInterval(load, 30000);
+</script>
+</body></html>
