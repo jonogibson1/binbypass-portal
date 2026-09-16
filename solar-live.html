@@ -62,11 +62,17 @@ const day = d => d.toLocaleDateString("en-AU",{weekday:"short",day:"2-digit",mon
 const hm = d => d.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"});
 
 async function load(){
-  let rows;
+  let rows=[];
   try{
-    const r = await fetch(`${URL_}?select=received_at,panel_v,batt_v,charging&order=id.desc&limit=3000`,{headers:{apikey:KEY}});
-    rows = await r.json();
-    if(!Array.isArray(rows)) throw new Error(JSON.stringify(rows).slice(0,120));
+    // Supabase caps each request at 1000 rows; page back until 7 days old (max 25 pages).
+    const cutoff = Date.now() - 7*86400e3;
+    for(let page=0; page<25; page++){
+      const r = await fetch(`${URL_}?select=received_at,panel_v,batt_v,charging&order=id.desc&limit=1000&offset=${page*1000}`,{headers:{apikey:KEY}});
+      const chunk = await r.json();
+      if(!Array.isArray(chunk)) throw new Error(JSON.stringify(chunk).slice(0,120));
+      rows.push(...chunk);
+      if(chunk.length<1000 || ts(chunk[chunk.length-1].received_at) < cutoff) break;
+    }
   }catch(e){
     $("status").className="status stale"; $("status").innerHTML=`Record unreachable<small>${e}</small>`; return;
   }
