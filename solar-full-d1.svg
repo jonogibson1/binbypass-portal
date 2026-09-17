@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 740" font-family="-apple-system,Helvetica,sans-serif">
+<rect width="1100" height="740" fill="#1b1b20"/>
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" fill="#bbb"/></marker></defs>
+<text x="550" y="30" fill="#eee" text-anchor="middle" font-size="17" font-weight="700">The whole rig — panel, meter, charger, cell, D1 Mini. All 9 wires.</text>
+<text x="550" y="50" fill="#999" text-anchor="middle" font-size="11.5">red = + / power · grey = − / ground · blue = data · yellow dashed = jumper · dashed = goes on AFTER flashing</text>
+
+<!-- PANEL -->
+<rect x="40" y="95" width="140" height="100" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
+<text x="110" y="132" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">SOLAR</text>
+<text x="110" y="150" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">PANEL</text>
+<text x="110" y="168" fill="#ca8" text-anchor="middle" font-size="9.5">6 V · 2 leads</text>
+<rect x="160" y="118" width="40" height="24" rx="4" fill="#f87171"/><text x="180" y="136" fill="#111" text-anchor="middle" font-size="14" font-weight="700">+</text>
+<rect x="160" y="162" width="40" height="24" rx="4" fill="#555"/><text x="180" y="180" fill="#fff" text-anchor="middle" font-size="14" font-weight="700">−</text>
+
+<!-- INA219 -->
+<rect x="280" y="90" width="220" height="150" rx="12" fill="#1c2331" stroke="#60a5fa" stroke-width="2"/>
+<text x="390" y="120" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">INA219 — the meter</text>
+<text x="390" y="137" fill="#9fb3c8" text-anchor="middle" font-size="9.5">fat screws on the sides · small pins below</text>
+<rect x="262" y="128" width="56" height="26" rx="5" fill="#f87171"/><text x="290" y="147" fill="#111" text-anchor="middle" font-size="12" font-weight="700">VIN+</text>
+<rect x="462" y="128" width="56" height="26" rx="5" fill="#f87171"/><text x="490" y="147" fill="#111" text-anchor="middle" font-size="12" font-weight="700">VIN−</text>
+<rect x="282" y="228" width="46" height="24" rx="5" fill="#f87171"/><text x="305" y="245" fill="#111" text-anchor="middle" font-size="11" font-weight="700">VCC</text>
+<rect x="387" y="228" width="46" height="24" rx="5" fill="#1e3a5f"/><text x="410" y="245" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700">SCL</text>
+<rect x="432" y="228" width="46" height="24" rx="5" fill="#1e3a5f"/><text x="455" y="245" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700">SDA</text>
+<rect x="480" y="188" width="46" height="24" rx="5" fill="#555"/><text x="503" y="205" fill="#fff" text-anchor="middle" font-size="11" font-weight="700">GND</text>
+
+<!-- CN3791 -->
+<rect x="600" y="100" width="160" height="115" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
+<text x="680" y="135" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">CN3791</text>
+<text x="680" y="152" fill="#ca8" text-anchor="middle" font-size="10">6 V charger</text>
+<rect x="582" y="113" width="46" height="22" rx="4" fill="#f87171"/><text x="605" y="129" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">PV+</text>
+<rect x="582" y="160" width="46" height="22" rx="4" fill="#555"/><text x="605" y="176" fill="#fff" text-anchor="middle" font-size="10.5" font-weight="700">PV−</text>
+<rect x="616" y="203" width="50" height="22" rx="4" fill="#f87171"/><text x="641" y="219" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">BAT+</text>
+<rect x="688" y="203" width="50" height="22" rx="4" fill="#555"/><text x="713" y="219" fill="#fff" text-anchor="middle" font-size="10.5" font-weight="700">BAT−</text>
+
+<!-- 18650 -->
+<rect x="620" y="420" width="140" height="105" rx="10" fill="#20362a" stroke="#4ade80" stroke-width="1.5"/>
+<text x="690" y="470" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">18650</text>
+<text x="690" y="488" fill="#9c9" text-anchor="middle" font-size="9.5">the ONE cell</text>
+<rect x="621" y="408" width="40" height="22" rx="4" fill="#f87171"/><text x="641" y="424" fill="#111" text-anchor="middle" font-size="13" font-weight="700">+</text>
+<rect x="693" y="408" width="40" height="22" rx="4" fill="#555"/><text x="713" y="424" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">−</text>
+<rect x="602" y="494" width="36" height="22" rx="4" fill="#555"/><text x="620" y="510" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">−</text>
+
+<!-- D1 MINI -->
+<rect x="330" y="360" width="220" height="300" rx="12" fill="#14304a" stroke="#3b82f6" stroke-width="2"/>
+<path d="M370 372 h22 v14 h-11 v-9 h22 v9 h-11 v-14 h22 v14 h-11 v-9 h22 v9 h-11 v-14 h22 v14 h-11 v-9 h22 v9 h-11 v-14 h14" stroke="#d4b106" stroke-width="2.5" fill="none"/>
+<text x="440" y="404" fill="#eee" text-anchor="middle" font-size="12.5" font-weight="700">Wemos D1 Mini</text>
+<rect x="392" y="470" width="96" height="80" rx="4" fill="#4a4f57" stroke="#777"/>
+<text x="440" y="514" fill="#ccc" text-anchor="middle" font-size="10">ESP8266</text>
+<rect x="420" y="646" width="40" height="14" rx="3" fill="#333" stroke="#666"/>
+<text x="440" y="678" fill="#aaa" text-anchor="middle" font-size="9.5">USB → Mac to flash. Never with wire 8 on.</text>
+<g font-size="11" font-weight="700" text-anchor="end">
+<circle cx="340" cy="425" r="5" fill="#ddd"/><text x="372" y="429" fill="#eee">RST</text>
+<circle cx="340" cy="460" r="5" fill="#ddd"/><text x="372" y="464" fill="#eee">D0</text>
+<circle cx="340" cy="530" r="5" fill="#ddd"/><text x="372" y="534" fill="#777">D5–D8</text>
+<circle cx="340" cy="635" r="5" fill="#f87171"/><text x="372" y="639" fill="#f87171">3V3</text>
+</g>
+<g font-size="11" font-weight="700">
+<circle cx="540" cy="425" r="5" fill="#ddd"/><text x="508" y="429" fill="#777">TX/RX</text>
+<circle cx="540" cy="460" r="5" fill="#60a5fa"/><text x="512" y="464" fill="#60a5fa">D1</text>
+<circle cx="540" cy="495" r="5" fill="#60a5fa"/><text x="512" y="499" fill="#60a5fa">D2</text>
+<circle cx="540" cy="600" r="5" fill="#999"/><text x="516" y="604" fill="#ccc">G</text>
+<circle cx="540" cy="635" r="5" fill="#f87171"/><text x="512" y="639" fill="#f87171">5V</text>
+</g>
+
+<!-- ground bus -->
+<line x1="40" y1="705" x2="1060" y2="705" stroke="#888" stroke-width="5"/>
+<text x="880" y="697" fill="#aaa" text-anchor="middle" font-size="11">COMMON GROUND — every − ends up here</text>
+
+<!-- 1 panel+ -> VIN+ -->
+<line x1="200" y1="130" x2="262" y2="141" stroke="#f87171" stroke-width="5" marker-end="url(#a)"/>
+<circle cx="231" cy="122" r="13" fill="#fff"/><text x="231" y="127" fill="#111" text-anchor="middle" font-size="12" font-weight="700">1</text>
+<!-- 2 VIN- -> PV+ -->
+<line x1="518" y1="141" x2="582" y2="126" stroke="#f87171" stroke-width="5" marker-end="url(#a)"/>
+<circle cx="550" cy="118" r="13" fill="#fff"/><text x="550" y="123" fill="#111" text-anchor="middle" font-size="12" font-weight="700">2</text>
+<!-- 3 panel- -> bus -->
+<line x1="180" y1="186" x2="180" y2="705" stroke="#888" stroke-width="5" marker-end="url(#a)"/>
+<circle cx="180" cy="330" r="13" fill="#fff"/><text x="180" y="335" fill="#111" text-anchor="middle" font-size="12" font-weight="700">3</text>
+<text x="180" y="210" fill="#aaa" text-anchor="middle" font-size="9">panel −</text>
+<!-- PV- -> bus -->
+<path d="M582 171 L568 171 L568 705" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<!-- charge: BAT+ -> cell +, BAT- -> cell - -->
+<line x1="641" y1="225" x2="641" y2="408" stroke="#f87171" stroke-width="5" marker-end="url(#a)"/>
+<text x="661" y="320" fill="#9fb3c8" font-size="9.5">charge</text>
+<line x1="713" y1="225" x2="713" y2="408" stroke="#888" stroke-width="4" marker-end="url(#a)"/>
+<!-- cell - -> bus -->
+<line x1="713" y1="525" x2="713" y2="705" stroke="#888" stroke-width="4" marker-end="url(#a)"/>
+
+<!-- 4 3V3 -> VCC (over the left) -->
+<path d="M335 635 L298 635 L298 262 L305 254" stroke="#f87171" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="298" cy="440" r="13" fill="#fff"/><text x="298" y="445" fill="#111" text-anchor="middle" font-size="12" font-weight="700">4</text>
+<!-- 7b D1 -> SCL, 7a D2 -> SDA -->
+<line x1="545" y1="460" x2="410" y2="254" stroke="#60a5fa" stroke-width="4" marker-end="url(#a)"/>
+<circle cx="490" cy="376" r="13" fill="#fff"/><text x="490" y="380" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">7b</text>
+<line x1="545" y1="495" x2="455" y2="254" stroke="#60a5fa" stroke-width="4" marker-end="url(#a)"/>
+<circle cx="520" cy="430" r="13" fill="#fff"/><text x="520" y="434" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">7a</text>
+<!-- 5 G -> INA GND (right side, up) ; 6 G -> cell - (down) -->
+<path d="M545 600 L572 600 L572 200 L528 200" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="572" cy="330" r="13" fill="#fff"/><text x="572" y="335" fill="#111" text-anchor="middle" font-size="12" font-weight="700">5</text>
+<path d="M572 600 L572 662 L600 662 L600 505 L602 505" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="586" cy="662" r="13" fill="#fff"/><text x="586" y="667" fill="#111" text-anchor="middle" font-size="12" font-weight="700">6</text>
+<!-- 8 cell + -> 5V (dashed) -->
+<path d="M621 419 L590 419 L590 635 L548 635" stroke="#f87171" stroke-width="4" fill="none" stroke-dasharray="9 6" marker-end="url(#a)"/>
+<circle cx="590" cy="540" r="13" fill="#fff"/><text x="590" y="545" fill="#111" text-anchor="middle" font-size="12" font-weight="700">8</text>
+<text x="622" y="560" fill="#f6a" font-size="9">after flash</text>
+<!-- 9 D0 -> RST jumper -->
+<path d="M334 460 C 300 460, 300 425, 334 425" stroke="#fbbf24" stroke-width="4" fill="none" stroke-dasharray="8 5" marker-end="url(#a)"/>
+<circle cx="268" cy="442" r="13" fill="#fff"/><text x="268" y="447" fill="#111" text-anchor="middle" font-size="12" font-weight="700">9</text>
+<text x="230" y="480" fill="#fbbf24" text-anchor="middle" font-size="9.5">D0→RST jumper</text>
+<text x="230" y="493" fill="#f6a" text-anchor="middle" font-size="9">after flash</text>
+
+<!-- right-side legend -->
+<g font-size="10.5" fill="#bbb">
+<text x="800" y="300">1  panel + → INA VIN+</text>
+<text x="800" y="318">2  INA VIN− → CN3791 PV+</text>
+<text x="800" y="336">3  panel − → ground</text>
+<text x="800" y="354">4  D1 3V3 → INA VCC</text>
+<text x="800" y="372">5  D1 G → INA GND</text>
+<text x="800" y="390">6  D1 G (2nd wire) → cell −</text>
+<text x="800" y="408">7a D2 → INA SDA · 7b D1 → INA SCL</text>
+<text x="800" y="426">8  cell + → D1 5V   (after flash)</text>
+<text x="800" y="444">9  D0 → RST jumper   (after flash)</text>
+<text x="800" y="472" fill="#888">CN3791 BAT+/BAT− → cell: normal charger hookup</text>
+<text x="800" y="490" fill="#888">All − share one ground. Panel − and PV− are the same node.</text>
+</g>
+</svg>

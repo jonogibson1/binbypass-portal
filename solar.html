@@ -26,83 +26,8 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <div class="rule"><b>Every wire has a colour:</b> <span style="color:#f87171">red = + / power</span>, <span style="color:#bbb">grey = − / ground</span>, <span style="color:#60a5fa">blue = data</span>. Match the colour and you can't get it wrong. Do Job 1 (power) first, then Job 2 (signal).</div>
 
 <h2>The full picture — one battery, one ground</h2>
-<div class="rule"><b>There is only ONE battery.</b> The panel charges the 18650 through the CN3791, and the same 18650 powers the ESP. The battery <b>+</b> is a junction: one wire in from the charger (<code>BAT+</code>), one wire out to the D1 Mini (<code>5V</code> pin, wire 8). Every <b>−</b> in the whole rig joins one common ground.</div>
-<svg viewBox="0 0 1000 560" font-family="-apple-system,sans-serif">
-<defs><marker id="af" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" fill="#bbb"/></marker></defs>
-
-<!-- SOLAR PANEL -->
-<rect x="40" y="90" width="130" height="100" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
-<text x="105" y="130" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">SOLAR</text>
-<text x="105" y="148" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">PANEL</text>
-<rect x="150" y="108" width="40" height="24" rx="4" fill="#f87171"/><text x="170" y="126" fill="#111" text-anchor="middle" font-size="14" font-weight="700">+</text>
-<rect x="150" y="153" width="40" height="24" rx="4" fill="#555"/><text x="170" y="171" fill="#fff" text-anchor="middle" font-size="14" font-weight="700">−</text>
-
-<!-- INA219 -->
-<rect x="300" y="80" width="170" height="120" rx="12" fill="#1c2331" stroke="#60a5fa" stroke-width="2"/>
-<text x="385" y="120" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">INA219</text>
-<text x="385" y="138" fill="#9fb3c8" text-anchor="middle" font-size="10.5">the meter</text>
-<rect x="282" y="118" width="56" height="26" rx="5" fill="#f87171"/><text x="310" y="137" fill="#111" text-anchor="middle" font-size="12" font-weight="700">VIN+</text>
-<rect x="432" y="118" width="56" height="26" rx="5" fill="#f87171"/><text x="460" y="137" fill="#111" text-anchor="middle" font-size="12" font-weight="700">VIN−</text>
-
-<!-- CN3791 -->
-<rect x="600" y="88" width="150" height="115" rx="10" fill="#2e2a1c" stroke="#eab308" stroke-width="1.5"/>
-<text x="675" y="120" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">CN3791</text>
-<text x="675" y="137" fill="#ca8" text-anchor="middle" font-size="10">charger</text>
-<rect x="585" y="112" width="52" height="22" rx="4" fill="#f87171"/><text x="611" y="128" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">PV+</text>
-<rect x="585" y="158" width="52" height="22" rx="4" fill="#555"/><text x="611" y="174" fill="#fff" text-anchor="middle" font-size="10.5" font-weight="700">PV−</text>
-<rect x="713" y="112" width="56" height="22" rx="4" fill="#f87171"/><text x="741" y="128" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">BAT+</text>
-<rect x="713" y="158" width="56" height="22" rx="4" fill="#555"/><text x="741" y="174" fill="#fff" text-anchor="middle" font-size="10.5" font-weight="700">BAT−</text>
-
-<!-- 18650 -->
-<rect x="835" y="92" width="125" height="105" rx="10" fill="#20362a" stroke="#4ade80" stroke-width="1.5"/>
-<text x="897" y="132" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">18650</text>
-<text x="897" y="150" fill="#9c9" text-anchor="middle" font-size="9.5">the ONE cell</text>
-<rect x="817" y="112" width="40" height="22" rx="4" fill="#f87171"/><text x="837" y="128" fill="#111" text-anchor="middle" font-size="13" font-weight="700">+</text>
-<rect x="817" y="158" width="40" height="22" rx="4" fill="#555"/><text x="837" y="174" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">−</text>
-
-<!-- ESP -->
-<rect x="300" y="395" width="300" height="115" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
-<text x="450" y="440" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">Wemos D1 Mini (ESP8266)</text>
-<text x="450" y="462" fill="#9fb3c8" text-anchor="middle" font-size="10.5">runs off the 18650</text>
-<rect x="332" y="383" width="56" height="24" rx="5" fill="#f87171"/><text x="360" y="401" fill="#111" text-anchor="middle" font-size="11" font-weight="700">5V</text>
-<rect x="332" y="498" width="56" height="24" rx="5" fill="#555"/><text x="360" y="516" fill="#fff" text-anchor="middle" font-size="11" font-weight="700">G</text>
-
-<!-- ground bus -->
-<line x1="60" y1="545" x2="900" y2="545" stroke="#888" stroke-width="5"/>
-<text x="480" y="537" fill="#aaa" text-anchor="middle" font-size="11">COMMON GROUND — every − joins this line</text>
-
-<!-- POWER wires -->
-<line x1="190" y1="120" x2="282" y2="131" stroke="#f87171" stroke-width="6" marker-end="url(#af)"/>
-<circle cx="236" cy="121" r="14" fill="#fff"/><text x="236" y="126" fill="#111" text-anchor="middle" font-size="13" font-weight="700">1</text>
-
-<line x1="488" y1="131" x2="585" y2="123" stroke="#f87171" stroke-width="6" marker-end="url(#af)"/>
-<circle cx="537" cy="122" r="14" fill="#fff"/><text x="537" y="127" fill="#111" text-anchor="middle" font-size="13" font-weight="700">2</text>
-
-<!-- charge wire CN3791 BAT+ -> 18650 + -->
-<line x1="769" y1="123" x2="817" y2="123" stroke="#f87171" stroke-width="6"/>
-<text x="793" y="106" fill="#9fb3c8" text-anchor="middle" font-size="9.5">charge</text>
-
-<!-- wire 8: battery + junction -> ESP 5Vin -->
-<path d="M793 123 L793 355 L360 355 L360 383" stroke="#f87171" stroke-width="6" fill="none" marker-end="url(#af)"/>
-<circle cx="793" cy="123" r="6" fill="#fff"/>
-<circle cx="575" cy="355" r="14" fill="#fff"/><text x="575" y="360" fill="#111" text-anchor="middle" font-size="13" font-weight="700">8</text>
-<text x="575" y="382" fill="#f6a" text-anchor="middle" font-size="10.5">battery + → D1 Mini 5V pin</text>
-
-<!-- ground drops -->
-<line x1="170" y1="177" x2="170" y2="545" stroke="#888" stroke-width="5" marker-end="url(#af)"/>
-<circle cx="170" cy="300" r="14" fill="#fff"/><text x="170" y="305" fill="#111" text-anchor="middle" font-size="13" font-weight="700">3</text>
-<text x="170" y="200" fill="#aaa" text-anchor="middle" font-size="9">panel −</text>
-<line x1="611" y1="180" x2="611" y2="545" stroke="#888" stroke-width="4" marker-end="url(#af)"/>
-<line x1="837" y1="180" x2="837" y2="545" stroke="#888" stroke-width="4" marker-end="url(#af)"/>
-<text x="837" y="200" fill="#aaa" text-anchor="middle" font-size="9">battery −</text>
-<line x1="360" y1="522" x2="360" y2="545" stroke="#888" stroke-width="5" marker-end="url(#af)"/>
-<circle cx="360" cy="533" r="13" fill="#fff"/><text x="360" y="538" fill="#111" text-anchor="middle" font-size="12" font-weight="700">6</text>
-
-<!-- signal note -->
-<path d="M470 200 L470 300 L332 300 L332 395" stroke="#60a5fa" stroke-width="2.5" fill="none" stroke-dasharray="7 5" marker-end="url(#af)"/>
-<text x="200" y="430" fill="#60a5fa" font-size="10.5">+ 4 signal wires (VCC·GND·SDA·SCL)</text>
-<text x="200" y="446" fill="#60a5fa" font-size="10.5">between INA219 &amp; ESP — see Job 2</text>
-</svg>
+<div class="rule"><b>There is only ONE battery.</b> The panel charges the 18650 through the CN3791, and the same 18650 powers the D1 Mini. The battery <b>+</b> is a junction: one wire in from the charger (<code>BAT+</code>), one wire out to the D1 Mini (<code>5V</code> pin, wire 8). Every <b>−</b> in the whole rig joins one common ground.</div>
+<img src="solar-full-d1.svg" alt="Whole rig wiring" style="width:100%;border-radius:14px;margin:10px 0">
 <div class="rule info"><b>The one 18650 does two things at once:</b> the CN3791 keeps it charged from the sun, and the ESP draws from it. Nothing plugs into the wall — the panel is the only energy in.</div>
 
 <h2>Job 1 — the power path (wires 1, 2, 3)</h2>
