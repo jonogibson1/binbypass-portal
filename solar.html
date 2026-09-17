@@ -22,11 +22,11 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <h2>Step 0 — one bit of soldering</h2>
 <div class="rule">The INA219 board arrives with its <b>6-pin header loose in the bag</b>. Solder the header into the row of 6 small holes (pins pointing up). Five minutes, same as the sensor wiring you've done before. The two big screw terminals need nothing.</div>
 
-<h2>The wiring — 8 wires, split into two easy jobs</h2>
+<h2>The wiring — 9 wires, split into two easy jobs</h2>
 <div class="rule"><b>Every wire has a colour:</b> <span style="color:#f87171">red = + / power</span>, <span style="color:#bbb">grey = − / ground</span>, <span style="color:#60a5fa">blue = data</span>. Match the colour and you can't get it wrong. Do Job 1 (power) first, then Job 2 (signal).</div>
 
 <h2>The full picture — one battery, one ground</h2>
-<div class="rule"><b>There is only ONE battery.</b> The panel charges the 18650 through the CN3791, and the same 18650 powers the ESP. The battery <b>+</b> is a junction: one wire in from the charger (<code>BAT+</code>), one wire out to the ESP (<code>5Vin</code>, wire 8). Every <b>−</b> in the whole rig joins one common ground.</div>
+<div class="rule"><b>There is only ONE battery.</b> The panel charges the 18650 through the CN3791, and the same 18650 powers the ESP. The battery <b>+</b> is a junction: one wire in from the charger (<code>BAT+</code>), one wire out to the D1 Mini (<code>5V</code> pin, wire 8). Every <b>−</b> in the whole rig joins one common ground.</div>
 <svg viewBox="0 0 1000 560" font-family="-apple-system,sans-serif">
 <defs><marker id="af" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" fill="#bbb"/></marker></defs>
 
@@ -62,10 +62,10 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 
 <!-- ESP -->
 <rect x="300" y="395" width="300" height="115" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
-<text x="450" y="440" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">ESP32-S3 shield</text>
+<text x="450" y="440" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">Wemos D1 Mini (ESP8266)</text>
 <text x="450" y="462" fill="#9fb3c8" text-anchor="middle" font-size="10.5">runs off the 18650</text>
-<rect x="332" y="383" width="56" height="24" rx="5" fill="#f87171"/><text x="360" y="401" fill="#111" text-anchor="middle" font-size="11" font-weight="700">5Vin</text>
-<rect x="332" y="498" width="56" height="24" rx="5" fill="#555"/><text x="360" y="516" fill="#fff" text-anchor="middle" font-size="11" font-weight="700">GND</text>
+<rect x="332" y="383" width="56" height="24" rx="5" fill="#f87171"/><text x="360" y="401" fill="#111" text-anchor="middle" font-size="11" font-weight="700">5V</text>
+<rect x="332" y="498" width="56" height="24" rx="5" fill="#555"/><text x="360" y="516" fill="#fff" text-anchor="middle" font-size="11" font-weight="700">G</text>
 
 <!-- ground bus -->
 <line x1="60" y1="545" x2="900" y2="545" stroke="#888" stroke-width="5"/>
@@ -86,7 +86,7 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <path d="M793 123 L793 355 L360 355 L360 383" stroke="#f87171" stroke-width="6" fill="none" marker-end="url(#af)"/>
 <circle cx="793" cy="123" r="6" fill="#fff"/>
 <circle cx="575" cy="355" r="14" fill="#fff"/><text x="575" y="360" fill="#111" text-anchor="middle" font-size="13" font-weight="700">8</text>
-<text x="575" y="382" fill="#f6a" text-anchor="middle" font-size="10.5">battery + → ESP 5Vin</text>
+<text x="575" y="382" fill="#f6a" text-anchor="middle" font-size="10.5">battery + → D1 Mini 5V pin</text>
 
 <!-- ground drops -->
 <line x1="170" y1="177" x2="170" y2="545" stroke="#888" stroke-width="5" marker-end="url(#af)"/>
@@ -154,8 +154,9 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <div class="rule info"><b>The charger's other side</b> (its <code>B+</code>/<code>B−</code> terminals) goes to the 18650 exactly as a CN3791 normally does — that's not one of the 8 numbered wires, it's the standard battery hookup.</div>
 
 <h2>Job 2 — meter to the brain + self-power (wires 4–8)</h2>
-<div class="rule">These are the <b>small header pins</b> you soldered in Step 0 — thin wires, not the fat screw terminals. Four go to the ESP, plus two power wires so the rig runs off its own battery.</div>
-<svg viewBox="0 0 1000 540" font-family="-apple-system,sans-serif">
+<div class="rule">These are the <b>small header pins</b> you soldered in Step 0 — thin wires, not the fat screw terminals. Four go to the D1 Mini, two power wires so the rig runs off its own battery, and one jumper on the D1 Mini itself for deep sleep.</div>
+<div class="rule warn"><b>Board changed 17 Sep 2026.</b> The clone ESP32-S3 DevKit's AMS1117 regulator cannot run from the 18650 — measured 4.14 V in, 2.42 V on the 3V3 rail, chip never boots. Replaced with a Wemos D1 Mini (ESP8266), whose low-dropout regulator holds 3.3 V from the cell. Pins below are the D1 Mini's. Wire 9 is new.</div>
+<svg viewBox="0 0 1000 556" font-family="-apple-system,sans-serif">
 <defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" fill="#bbb"/></marker></defs>
 
 <!-- INA header block -->
@@ -169,12 +170,12 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 
 <!-- ESP block -->
 <rect x="560" y="80" width="380" height="330" rx="12" fill="#1d2b3a" stroke="#3b82f6" stroke-width="2"/>
-<text x="750" y="112" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">ESP32-S3 on the screw shield</text>
+<text x="750" y="112" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">Wemos D1 Mini (ESP8266)</text>
 <rect x="530" y="150" width="70" height="28" rx="5" fill="#f87171"/><text x="565" y="170" fill="#111" text-anchor="middle" font-size="12" font-weight="700">3V3</text>
-<rect x="530" y="200" width="70" height="28" rx="5" fill="#555"/><text x="565" y="220" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">GND</text>
-<rect x="530" y="250" width="70" height="28" rx="5" fill="#1e3a5f"/><text x="565" y="270" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700">GPIO8</text>
-<rect x="530" y="300" width="70" height="28" rx="5" fill="#1e3a5f"/><text x="565" y="320" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700">GPIO9</text>
-<rect x="530" y="360" width="70" height="28" rx="5" fill="#f87171"/><text x="565" y="380" fill="#111" text-anchor="middle" font-size="11" font-weight="700">5Vin</text>
+<rect x="530" y="200" width="70" height="28" rx="5" fill="#555"/><text x="565" y="220" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">G</text>
+<rect x="530" y="250" width="70" height="28" rx="5" fill="#1e3a5f"/><text x="565" y="270" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700">D2</text>
+<rect x="530" y="300" width="70" height="28" rx="5" fill="#1e3a5f"/><text x="565" y="320" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700">D1</text>
+<rect x="530" y="360" width="70" height="28" rx="5" fill="#f87171"/><text x="565" y="380" fill="#111" text-anchor="middle" font-size="11" font-weight="700">5V</text>
 
 <!-- battery -->
 <rect x="30" y="410" width="230" height="90" rx="10" fill="#20362a" stroke="#4ade80" stroke-width="1.5"/>
@@ -202,30 +203,32 @@ code{background:#2a2a32;border-radius:4px;padding:1px 6px;font-size:12.5px}
 <path d="M505 214 L505 483 L276 483" stroke="#888" stroke-width="4" fill="none" marker-end="url(#ar2)"/>
 <circle cx="505" cy="455" r="15" fill="#fff"/><text x="505" y="460" fill="#111" text-anchor="middle" font-size="14" font-weight="700">6</text>
 
-<text x="500" y="522" fill="#aaa" text-anchor="middle" font-size="11">wire 6 is a SECOND wire off the SAME ESP GND terminal → battery − (shared ground, or the volts read as junk)</text>
+<text x="500" y="522" fill="#aaa" text-anchor="middle" font-size="11">wire 6 is a SECOND wire off the SAME D1 G pin → battery − (shared ground, or the volts read as junk)</text>
+<text x="500" y="538" fill="#f6a" text-anchor="middle" font-size="11">wire 9: D1 Mini D0 → RST — deep-sleep wake jumper. Without it the board sleeps once and never wakes.</text>
 </svg>
 
-<h2>Wire list — the whole 8</h2>
+<h2>Wire list — the whole 9</h2>
 <table>
 <tr><th>#</th><th>Colour</th><th>From</th><th>To</th></tr>
 <tr><td>1</td><td>red</td><td>Panel <b>+</b> lead</td><td>INA219 <code>VIN+</code> screw (IN)</td></tr>
 <tr><td>2</td><td>red</td><td>INA219 <code>VIN−</code> screw (OUT)</td><td>CN3791 <code>PV+</code></td></tr>
 <tr><td>3</td><td>grey</td><td>Panel <b>−</b> lead</td><td>CN3791 <code>PV−</code> (straight through, INA not involved)</td></tr>
-<tr><td>4</td><td>red</td><td>Shield <code>3V3</code></td><td>INA219 <code>VCC</code></td></tr>
-<tr><td>5</td><td>grey</td><td>Shield <code>GND</code></td><td>INA219 <code>GND</code></td></tr>
-<tr><td>6</td><td>grey</td><td>Shield <code>GND</code> (same terminal, 2nd wire)</td><td>Battery <b>−</b> / CN3791 ground side</td></tr>
-<tr><td>7</td><td>blue</td><td>Shield <code>8</code> → INA <code>SDA</code></td><td>Shield <code>9</code> → INA <code>SCL</code></td></tr>
-<tr><td>8</td><td>red</td><td>Battery <b>+</b> node</td><td>Shield <code>5Vin</code> (pull this whenever USB is plugged in)</td></tr>
+<tr><td>4</td><td>red</td><td>D1 Mini <code>3V3</code></td><td>INA219 <code>VCC</code></td></tr>
+<tr><td>5</td><td>grey</td><td>D1 Mini <code>G</code></td><td>INA219 <code>GND</code></td></tr>
+<tr><td>6</td><td>grey</td><td>D1 Mini <code>G</code> (same pin, 2nd wire)</td><td>Battery <b>−</b> / CN3791 ground side</td></tr>
+<tr><td>7</td><td>blue</td><td>D1 Mini <code>D2</code> → INA <code>SDA</code></td><td>D1 Mini <code>D1</code> → INA <code>SCL</code></td></tr>
+<tr><td>8</td><td>red</td><td>Battery <b>+</b> node</td><td>D1 Mini <code>5V</code> pin (pull this whenever USB is plugged in)</td></tr>
+<tr><td>9</td><td>any</td><td>D1 Mini <code>D0</code></td><td>D1 Mini <code>RST</code> — deep-sleep wake jumper (short wire on the board itself)</td></tr>
 </table>
 
 <div class="rule warn"><b>Two rules:</b> wire 6 is not optional — without the shared ground the voltage numbers are garbage. And direction matters on the meter: panel side into <code>VIN+</code>, charger side out of <code>VIN−</code>, or every current reading comes out negative.</div>
 
-<div class="rule info"><b>Power — self-contained, no cords:</b> one more wire: <b>battery + → the shield's <code>5Vin</code> terminal</b> (ground is already shared via wire 6). The ESP runs off the rig's own 18650 and the firmware deep-sleeps between 5-minute readings so the panel easily sustains it. <b>The one rule:</b> whenever USB goes in for flashing, pull the 5Vin wire out first — never both at once.</div>
+<div class="rule info"><b>Power — self-contained, no cords:</b> one more wire: <b>battery + → the D1 Mini's <code>5V</code> pin</b> (ground is already shared via wire 6). The ESP runs off the rig's own 18650 and the firmware deep-sleeps between 5-minute readings so the panel easily sustains it. <b>The one rule:</b> whenever USB goes in for flashing, pull the 5Vin wire out first — never both at once.</div>
 
 <h2>Then</h2>
 <table>
-<tr><td>1</td><td>USB into the Mac once — say the word and I flash <code>solar-logger.yaml</code> from here</td></tr>
-<tr><td>2</td><td>Unplug USB, reconnect the 5Vin wire, panel in the sun → HA shows volts, mA, W live; the portal's live section fills from the permanent record</td></tr>
+<tr><td>1</td><td>USB into the Mac once — say the word and I flash <code>solar-logger-d1.yaml</code> from here</td></tr>
+<tr><td>2</td><td>Unplug USB, reconnect the 5V wire, panel in the sun → HA shows volts, mA, W live; the portal's live section fills from the permanent record</td></tr>
 <tr><td>3</td><td>Seal in the IP67 box, panel out, leave it. <b>"Solar Harvest Today (Wh)"</b> is the number the whole test exists for</td></tr>
 </table>
 
