@@ -38,7 +38,6 @@
 <text x="690" y="488" fill="#9c9" text-anchor="middle" font-size="9.5">the ONE cell</text>
 <rect x="621" y="408" width="40" height="22" rx="4" fill="#f87171"/><text x="641" y="424" fill="#111" text-anchor="middle" font-size="13" font-weight="700">+</text>
 <rect x="693" y="408" width="40" height="22" rx="4" fill="#555"/><text x="713" y="424" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">−</text>
-<rect x="602" y="494" width="36" height="22" rx="4" fill="#555"/><text x="620" y="510" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">−</text>
 
 <!-- D1 MINI -->
 <rect x="330" y="360" width="220" height="300" rx="12" fill="#14304a" stroke="#3b82f6" stroke-width="2"/>
@@ -51,11 +50,9 @@
 <g font-size="11" font-weight="700" text-anchor="end">
 <circle cx="340" cy="425" r="5" fill="#ddd"/><text x="372" y="429" fill="#eee">RST</text>
 <circle cx="340" cy="460" r="5" fill="#ddd"/><text x="372" y="464" fill="#eee">D0</text>
-<circle cx="340" cy="530" r="5" fill="#ddd"/><text x="372" y="534" fill="#777">D5–D8</text>
 <circle cx="340" cy="635" r="5" fill="#f87171"/><text x="372" y="639" fill="#f87171">3V3</text>
 </g>
 <g font-size="11" font-weight="700">
-<circle cx="540" cy="425" r="5" fill="#ddd"/><text x="508" y="429" fill="#777">TX/RX</text>
 <circle cx="540" cy="460" r="5" fill="#60a5fa"/><text x="512" y="464" fill="#60a5fa">D1</text>
 <circle cx="540" cy="495" r="5" fill="#60a5fa"/><text x="512" y="499" fill="#60a5fa">D2</text>
 <circle cx="540" cy="600" r="5" fill="#999"/><text x="516" y="604" fill="#ccc">G</text>
@@ -77,7 +74,7 @@
 <circle cx="180" cy="330" r="13" fill="#fff"/><text x="180" y="335" fill="#111" text-anchor="middle" font-size="12" font-weight="700">3</text>
 <text x="180" y="210" fill="#aaa" text-anchor="middle" font-size="9">panel −</text>
 <!-- PV- -> bus -->
-<path d="M582 171 L568 171 L568 705" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<path d="M582 171 L578 171 L578 705" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
 <!-- charge: BAT+ -> cell +, BAT- -> cell - -->
 <line x1="641" y1="225" x2="641" y2="408" stroke="#f87171" stroke-width="5" marker-end="url(#a)"/>
 <text x="661" y="320" fill="#9fb3c8" font-size="9.5">charge</text>
@@ -87,17 +84,17 @@
 
 <!-- 4 3V3 -> VCC (over the left) -->
 <path d="M335 635 L298 635 L298 262 L305 254" stroke="#f87171" stroke-width="4" fill="none" marker-end="url(#a)"/>
-<circle cx="298" cy="440" r="13" fill="#fff"/><text x="298" y="445" fill="#111" text-anchor="middle" font-size="12" font-weight="700">4</text>
+<circle cx="298" cy="570" r="13" fill="#fff"/><text x="298" y="575" fill="#111" text-anchor="middle" font-size="12" font-weight="700">4</text>
 <!-- 7b D1 -> SCL, 7a D2 -> SDA -->
 <line x1="545" y1="460" x2="410" y2="254" stroke="#60a5fa" stroke-width="4" marker-end="url(#a)"/>
 <circle cx="490" cy="376" r="13" fill="#fff"/><text x="490" y="380" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">7b</text>
 <line x1="545" y1="495" x2="455" y2="254" stroke="#60a5fa" stroke-width="4" marker-end="url(#a)"/>
 <circle cx="520" cy="430" r="13" fill="#fff"/><text x="520" y="434" fill="#111" text-anchor="middle" font-size="10.5" font-weight="700">7a</text>
 <!-- 5 G -> INA GND (right side, up) ; 6 G -> cell - (down) -->
-<path d="M545 600 L572 600 L572 200 L528 200" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
-<circle cx="572" cy="330" r="13" fill="#fff"/><text x="572" y="335" fill="#111" text-anchor="middle" font-size="12" font-weight="700">5</text>
-<path d="M572 600 L572 662 L600 662 L600 505 L602 505" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
-<circle cx="586" cy="662" r="13" fill="#fff"/><text x="586" y="667" fill="#111" text-anchor="middle" font-size="12" font-weight="700">6</text>
+<path d="M545 600 L556 600 L556 200 L528 200" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="556" cy="330" r="13" fill="#fff"/><text x="556" y="335" fill="#111" text-anchor="middle" font-size="12" font-weight="700">5</text>
+<path d="M556 600 L556 705" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="556" cy="672" r="13" fill="#fff"/><text x="556" y="677" fill="#111" text-anchor="middle" font-size="12" font-weight="700">6</text>
 <!-- 8 cell + -> 5V (dashed) -->
 <path d="M621 419 L590 419 L590 635 L548 635" stroke="#f87171" stroke-width="4" fill="none" stroke-dasharray="9 6" marker-end="url(#a)"/>
 <circle cx="590" cy="540" r="13" fill="#fff"/><text x="590" y="545" fill="#111" text-anchor="middle" font-size="12" font-weight="700">8</text>
@@ -115,11 +112,12 @@
 <text x="800" y="336">3  panel − → ground</text>
 <text x="800" y="354">4  D1 3V3 → INA VCC</text>
 <text x="800" y="372">5  D1 G → INA GND</text>
-<text x="800" y="390">6  D1 G (2nd wire) → cell −</text>
+<text x="800" y="390">6  D1 G (2nd wire) → ground / cell −</text>
 <text x="800" y="408">7a D2 → INA SDA · 7b D1 → INA SCL</text>
 <text x="800" y="426">8  cell + → D1 5V   (after flash)</text>
 <text x="800" y="444">9  D0 → RST jumper   (after flash)</text>
 <text x="800" y="472" fill="#888">CN3791 BAT+/BAT− → cell: normal charger hookup</text>
-<text x="800" y="490" fill="#888">All − share one ground. Panel − and PV− are the same node.</text>
+<text x="800" y="490" fill="#888">All − share one ground.</text>
+<text x="800" y="508" fill="#888">Panel − and PV− are the same node.</text>
 </g>
 </svg>
