@@ -86,7 +86,8 @@ async function load(){
   // expected cadence from recent gaps (bench 5s, production 300s)
   const gaps=[]; for(let k=0;k<Math.min(rows.length-1,20);k++) gaps.push((rows[k].t-rows[k+1].t)/1000);
   gaps.sort((a,b)=>a-b); const cadence = gaps.length? gaps[Math.floor(gaps.length/2)] : 300;
-  const staleAfter = Math.max(90, cadence*3);
+  // deep-sleep logger posts a burst every ~5 min; treat anything under 12 min as alive
+  const staleAfter = Math.max(720, cadence*3);
   const ageTxt = ageS<90 ? `${Math.round(ageS)} s ago` : ageS<5400 ? `${Math.round(ageS/60)} min ago` : `${(ageS/3600).toFixed(1)} h ago`;
   if(ageS < staleAfter){
     $("status").className="status ok";
