@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="-apple-system,Helvetica,sans-serif">
+<rect width="1000" height="620" fill="#1b1b20"/>
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" fill="#bbb"/></marker></defs>
+<text x="500" y="30" fill="#eee" text-anchor="middle" font-size="17" font-weight="700">Wemos D1 Mini — the 9 wires (board shown antenna-up, as in your photo)</text>
+<text x="500" y="50" fill="#999" text-anchor="middle" font-size="11.5">red = + / power · grey = − / ground · blue = data · dashed = leave OFF until the bench build is flashed</text>
+
+<!-- D1 Mini body -->
+<rect x="300" y="80" width="260" height="440" rx="14" fill="#14304a" stroke="#3b82f6" stroke-width="2"/>
+<path d="M340 100 h30 v18 h-15 v-12 h30 v12 h-15 v-18 h30 v18 h-15 v-12 h30 v12 h-15 v-18 h30 v18 h-15 v-12 h30 v12 h-15 v-18 h20" stroke="#d4b106" stroke-width="3" fill="none"/>
+<rect x="360" y="210" width="140" height="110" rx="4" fill="#4a4f57" stroke="#777"/>
+<text x="430" y="270" fill="#ccc" text-anchor="middle" font-size="11">ESP8266</text>
+<text x="430" y="286" fill="#999" text-anchor="middle" font-size="9.5">module</text>
+<rect x="405" y="500" width="50" height="20" rx="3" fill="#333" stroke="#666"/>
+<text x="430" y="540" fill="#aaa" text-anchor="middle" font-size="10.5">USB-C → Mac for flashing. Never together with wire 8.</text>
+
+<!-- left pins -->
+<g font-size="12" font-weight="700" text-anchor="end">
+<circle cx="310" cy="130" r="6" fill="#ddd"/><text x="345" y="134" fill="#eee">RST</text>
+<circle cx="310" cy="180" r="6" fill="#ddd"/><text x="345" y="184" fill="#eee">A0</text>
+<circle cx="310" cy="230" r="6" fill="#ddd"/><text x="345" y="234" fill="#eee">D0</text>
+<circle cx="310" cy="280" r="6" fill="#ddd"/><text x="345" y="284" fill="#eee">D5</text>
+<circle cx="310" cy="330" r="6" fill="#ddd"/><text x="345" y="334" fill="#eee">D6</text>
+<circle cx="310" cy="380" r="6" fill="#ddd"/><text x="345" y="384" fill="#eee">D7</text>
+<circle cx="310" cy="430" r="6" fill="#ddd"/><text x="345" y="434" fill="#eee">D8</text>
+<circle cx="310" cy="480" r="6" fill="#f87171"/><text x="345" y="484" fill="#f87171">3V3</text>
+</g>
+<!-- right pins -->
+<g font-size="12" font-weight="700">
+<circle cx="550" cy="130" r="6" fill="#ddd"/><text x="515" y="134" fill="#eee">TX</text>
+<circle cx="550" cy="180" r="6" fill="#ddd"/><text x="515" y="184" fill="#eee">RX</text>
+<circle cx="550" cy="230" r="6" fill="#60a5fa"/><text x="515" y="234" fill="#60a5fa">D1</text>
+<circle cx="550" cy="280" r="6" fill="#60a5fa"/><text x="515" y="284" fill="#60a5fa">D2</text>
+<circle cx="550" cy="330" r="6" fill="#ddd"/><text x="515" y="334" fill="#eee">D3</text>
+<circle cx="550" cy="380" r="6" fill="#ddd"/><text x="515" y="384" fill="#eee">D4</text>
+<circle cx="550" cy="430" r="6" fill="#999"/><text x="522" y="434" fill="#ccc">G</text>
+<circle cx="550" cy="480" r="6" fill="#f87171"/><text x="515" y="484" fill="#f87171">5V</text>
+</g>
+
+<!-- INA219 header -->
+<rect x="720" y="100" width="230" height="310" rx="12" fill="#1c2331" stroke="#60a5fa" stroke-width="2"/>
+<text x="835" y="128" fill="#eee" text-anchor="middle" font-size="14" font-weight="700">INA219</text>
+<text x="835" y="145" fill="#9fb3c8" text-anchor="middle" font-size="10">the small header pins</text>
+<rect x="700" y="163" width="60" height="26" rx="5" fill="#f87171"/><text x="730" y="181" fill="#111" text-anchor="middle" font-size="12" font-weight="700">VCC</text>
+<rect x="700" y="217" width="60" height="26" rx="5" fill="#1e3a5f"/><text x="730" y="235" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SCL</text>
+<rect x="700" y="267" width="60" height="26" rx="5" fill="#1e3a5f"/><text x="730" y="285" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="700">SDA</text>
+<rect x="700" y="367" width="60" height="26" rx="5" fill="#555"/><text x="730" y="385" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">GND</text>
+
+<!-- battery -->
+<rect x="720" y="440" width="230" height="110" rx="10" fill="#20362a" stroke="#4ade80" stroke-width="1.5"/>
+<text x="835" y="475" fill="#eee" text-anchor="middle" font-size="13" font-weight="700">18650</text>
+<text x="835" y="492" fill="#9c9" text-anchor="middle" font-size="9.5">stays on the CN3791 too</text>
+<rect x="700" y="452" width="46" height="24" rx="5" fill="#f87171"/><text x="723" y="470" fill="#111" text-anchor="middle" font-size="13" font-weight="700">+</text>
+<rect x="700" y="510" width="46" height="24" rx="5" fill="#555"/><text x="723" y="528" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">−</text>
+
+<!-- wire 4: 3V3 -> VCC, routed over the top -->
+<path d="M304 480 L270 480 L270 66 L680 66 L680 176 L700 176" stroke="#f87171" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="470" cy="66" r="13" fill="#fff"/><text x="470" y="71" fill="#111" text-anchor="middle" font-size="12" font-weight="700">4</text>
+<!-- wire 7b: D1 -> SCL -->
+<line x1="556" y1="230" x2="700" y2="230" stroke="#60a5fa" stroke-width="4" marker-end="url(#a)"/>
+<circle cx="628" cy="230" r="13" fill="#fff"/><text x="628" y="235" fill="#111" text-anchor="middle" font-size="11" font-weight="700">7b</text>
+<!-- wire 7a: D2 -> SDA -->
+<line x1="556" y1="280" x2="700" y2="280" stroke="#60a5fa" stroke-width="4" marker-end="url(#a)"/>
+<circle cx="628" cy="280" r="13" fill="#fff"/><text x="628" y="285" fill="#111" text-anchor="middle" font-size="11" font-weight="700">7a</text>
+<!-- wire 5: G -> INA GND -->
+<path d="M556 430 L620 430 L620 380 L700 380" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="660" cy="380" r="13" fill="#fff"/><text x="660" y="385" fill="#111" text-anchor="middle" font-size="12" font-weight="700">5</text>
+<!-- wire 6: G (2nd wire) -> battery - -->
+<path d="M556 430 L620 430 L620 522 L700 522" stroke="#888" stroke-width="4" fill="none" marker-end="url(#a)"/>
+<circle cx="660" cy="522" r="13" fill="#fff"/><text x="660" y="527" fill="#111" text-anchor="middle" font-size="12" font-weight="700">6</text>
+<!-- wire 8: battery + -> 5V (dashed, off for now) -->
+<path d="M700 464 L640 464 L640 480 L556 480" stroke="#f87171" stroke-width="4" fill="none" stroke-dasharray="9 6" marker-end="url(#a)"/>
+<circle cx="600" cy="480" r="13" fill="#fff"/><text x="600" y="485" fill="#111" text-anchor="middle" font-size="12" font-weight="700">8</text>
+<text x="640" y="504" fill="#f6a" text-anchor="middle" font-size="9.5">OFF until flashed</text>
+<!-- wire 9: D0 -> RST jumper (dashed) -->
+<path d="M304 230 C 240 230, 240 130, 304 130" stroke="#fbbf24" stroke-width="4" fill="none" stroke-dasharray="9 6" marker-end="url(#a)"/>
+<circle cx="256" cy="180" r="13" fill="#fff"/><text x="256" y="185" fill="#111" text-anchor="middle" font-size="12" font-weight="700">9</text>
+<text x="150" y="176" fill="#fbbf24" text-anchor="middle" font-size="10">D0 → RST jumper</text>
+<text x="150" y="190" fill="#fbbf24" text-anchor="middle" font-size="10">deep-sleep wake</text>
+<text x="150" y="204" fill="#f6a" text-anchor="middle" font-size="9.5">add AFTER flashing</text>
+
+<text x="150" y="330" fill="#aaa" text-anchor="middle" font-size="10.5">Wires 1, 2, 3 (panel → meter</text>
+<text x="150" y="344" fill="#aaa" text-anchor="middle" font-size="10.5">→ charger) are unchanged.</text>
+<text x="150" y="358" fill="#aaa" text-anchor="middle" font-size="10.5">Nothing on the INA219's big</text>
+<text x="150" y="372" fill="#aaa" text-anchor="middle" font-size="10.5">screw terminals moves.</text>
+<text x="500" y="600" fill="#888" text-anchor="middle" font-size="10.5">Order: 4, 5, 6, 7a, 7b → USB in → flash → USB out → then 8 and 9.</text>
+</svg>
