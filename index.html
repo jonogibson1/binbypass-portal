@@ -2,6 +2,7 @@
 <title>Bin Bypass Live</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="demo.js"></script>
 <style>
 body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:18px;max-width:720px;margin:auto}
 h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margin:10px 0}
@@ -14,6 +15,9 @@ h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margi
 .pin{width:30px;height:30px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;
      font:700 14px -apple-system,sans-serif;color:#0c1f13;box-shadow:0 1px 5px rgba(0,0,0,.6)}
 .pin.fresh{background:#4ade80}.pin.stale{background:#e0b040}
+.pin.demo{background:#9cc8ff;border-style:dashed}
+.badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;padding:1px 6px;border-radius:6px;background:#2a3a55;color:#9cc8ff;margin-left:4px}
+.toggle{font-size:12px;color:#bbb;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
 .leaflet-popup-content-wrapper{background:#232329;color:#eee;border-radius:10px}
 .leaflet-popup-tip{background:#232329}
 .stats{display:none;margin-top:10px;border-top:1px solid #333;padding-top:10px}
@@ -24,7 +28,7 @@ h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margi
 .hint{font-size:11px;color:#666}
 </style></head><body>
 <h1>Bin Bypass Live — fleet (anywhere)</h1>
-<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a> · <a style="color:#7ab7ff" href="solar-live.html">solar rig live →</a><br><span id="updated" class="hint">checking data freshness…</span> <span class="hint">· build 2026-08-02.7</span></div>
+<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a> · <a style="color:#7ab7ff" href="solar-live.html">solar rig live →</a><br><span id="updated" class="hint">checking data freshness…</span> <span class="hint">· build 2026-10-28.1</span><br><label class="toggle"><input type="checkbox" id="demoToggle" checked> show demo fleet</label> <span class="hint">· <span style="color:#4ade80">●</span> live unit · <span style="color:#9cc8ff">◌</span> demo unit (simulated Sydney sites, not real data)</span></div>
 <div id="map"></div>
 <div id="root">loading…</div>
 <script>
@@ -49,7 +53,7 @@ const statCache = {};
 async function unitStats(id){
   const c = statCache[id];
   if(c && Date.now()-c.t < 60000) return c.v;
-  const ev = await sb(`slot_events?unit_id=eq.${id}&select=slot,state,changed_at&order=changed_at.asc&limit=1000`);
+  const ev = DEMO.isDemo(id) ? DEMO.events(id).slice(-1000) : await sb(`slot_events?unit_id=eq.${id}&select=slot,state,changed_at&order=changed_at.asc&limit=1000`);
   const weekAgo = Date.now() - 7*24*3600*1000;
   let deposits7 = 0, moved = 0, dwellSum = 0, dwellN = 0;
   const openSince = {};                       // slot -> deposit time awaiting collection
@@ -96,7 +100,7 @@ let fitted = false;
 function plot(located){
   for(const u of located){
     const fresh = (Date.now()-Date.parse(u.last_seen)) < 30*60*1000;
-    const icon = L.divIcon({html:`<div class="pin ${fresh?"fresh":"stale"}">${u.occ}</div>`,
+    const icon = L.divIcon({html:`<div class="pin ${u.demo?"demo":fresh?"fresh":"stale"}">${u.occ}</div>`,
                             className:"", iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-14]});
     if(markers[u.unit_id]){ markers[u.unit_id].setLatLng([u.lat,u.lon]).setIcon(icon); }
     else {
@@ -106,7 +110,7 @@ function plot(located){
         m.setPopupContent(`<b>Unit ${u.unit_id}</b><br><span class="meta">fetching…</span>`);
         const s = await unitStats(u.unit_id);
         m.setPopupContent(
-          `<b>Unit ${u.unit_id}</b> — ${u.occ} container${u.occ===1?"":"s"} now<br>`+
+          `<b>Unit ${u.unit_id}</b>${u.demo?' <span class="badge">DEMO</span>':''} — ${u.occ} container${u.occ===1?"":"s"} now<br>`+
           `<span class="meta">updated ${ago(u.last_seen)} · ±${u.acc_m??"?"} m</span><br>`+
           `In past 7 days: <b>${s.deposits7}</b><br>`+
           `Avg dwell: <b>${s.dwell}</b><br>`+
@@ -115,8 +119,10 @@ function plot(located){
       markers[u.unit_id] = m;
     }
   }
+  for(const id in markers){ if(!located.some(u=>u.unit_id===id)){ map.removeLayer(markers[id]); delete markers[id]; } }
   if(!fitted && located.length){
-    map.fitBounds(located.map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:17});
+    const demoPins = located.filter(u=>u.demo);
+    map.fitBounds((demoPins.length?demoPins:located).map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:17});
     fitted = true;
   }
 }
@@ -124,7 +130,9 @@ function plot(located){
 // ---- fleet cards ----
 async function tick(){
   try{
-    const units = await sb("units?select=*&order=last_seen.desc");
+    const real = await sb("units?select=*&order=last_seen.desc");
+    const showDemo = document.getElementById("demoToggle").checked;
+    const units = real.concat(showDemo ? DEMO.units() : []);
     const latest = await sb("packets?select=received_at&order=id.desc&limit=1");
     if(latest.length){
       const t = new Date(latest[0].received_at);
@@ -136,12 +144,12 @@ async function tick(){
     const located = [];
     let h = "";
     for(const u of units){
-      const pk = await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
+      const pk = u.demo ? DEMO.packets(u.unit_id,1) : await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
       const slots = pk.length?JSON.parse(pk[0].slots):[];
       const occ = slots.filter(v=>v===1).length;
       if(u.lat!=null) located.push({...u, occ});
       const loc = u.lat!=null?` · <a style="color:#7ab7ff" href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank" onclick="event.stopPropagation()">📍 ${Number(u.lat).toFixed(4)},${Number(u.lon).toFixed(4)}</a>`:"";
-      h+=`<div class="card unitcard" onclick="toggleStats('${u.unit_id}')"><b>${u.unit_id}</b> <span class="meta">${u.label||""} · ${occ}/6 in · updated <span title="${u.last_seen}">${ago(u.last_seen)}</span> · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span> <span class="hint">tap for stats</span> <a href="unit.html?unit=${u.unit_id}" onclick="event.stopPropagation()" style="color:#7ab7ff;font-size:11px">detail →</a><div class="slots">`;
+      h+=`<div class="card unitcard" onclick="toggleStats('${u.unit_id}')"><b>${u.unit_id}</b>${u.demo?'<span class="badge">DEMO</span>':''} <span class="meta">${u.label||""} · ${occ}/6 in · updated <span title="${u.last_seen}">${ago(u.last_seen)}</span> · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span> <span class="hint">tap for stats</span> <a href="unit.html?unit=${u.unit_id}" onclick="event.stopPropagation()" style="color:#7ab7ff;font-size:11px">detail →</a><div class="slots">`;
       slots.forEach(v=>{h+=`<div class="s s${v}">${v===255?"✕":v}</div>`});
       h+=`</div><div class="stats" id="st-${u.unit_id}"></div></div>`;
     }
@@ -155,5 +163,6 @@ async function tick(){
     }
   }catch(e){document.getElementById("root").innerHTML='<div class="card">config needed: '+e+'</div>'}
 }
+document.getElementById("demoToggle").addEventListener("change",()=>{fitted=false;tick();});
 setInterval(tick,5000);tick();
 </script></body></html>
