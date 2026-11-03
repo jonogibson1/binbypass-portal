@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bin Bypass power</title>
+<style>
+  :root{--bg:#f6f5f1;--fg:#1d1f1c;--muted:#5f635c;--rule:#d9d7cf;--panel:#fff;--chg:#2f7a3d;--v:#245f9c}
+  @media (prefers-color-scheme:dark){:root{--bg:#15171a;--fg:#e6e4dc;--muted:#a3a69d;--rule:#2f3337;--panel:#1d2024;--chg:#7fcf8a;--v:#8db9ee}}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;padding:20px 16px 40px}
+  main{max-width:1000px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;color:var(--muted);font-size:14px;margin-bottom:14px}
+  input,select{font:inherit;padding:4px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--panel);color:var(--fg)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 16px}
+  .tile{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
+  .tile b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+  .tile span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .chart{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:12px;height:360px}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin-top:16px;font-variant-numeric:tabular-nums}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--rule)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
+  .on{color:var(--chg);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>Unit power</h1>
+<div class="row">
+  <label>Unit <input id="unit" value="C39C32B7" size="10"></label>
+  <label>Window <select id="hours"><option value="6">6 h</option><option value="12" selected>12 h</option><option value="24">24 h</option><option value="72">3 days</option><option value="168">7 days</option></select></label>
+  <span id="status">loading…</span>
+</div>
+<div class="tiles">
+  <div class="tile"><span>Cell now</span><b id="t-v">—</b></div>
+  <div class="tile"><span>Charging</span><b id="t-c">—</b></div>
+  <div class="tile"><span>Last packet</span><b id="t-t">—</b></div>
+  <div class="tile"><span>Packets in window</span><b id="t-n">—</b></div>
+  <div class="tile"><span>Cell min / max</span><b id="t-mm">—</b></div>
+  <div class="tile"><span>Time charging</span><b id="t-pct">—</b></div>
+</div>
+<div class="chart"><canvas id="c"></canvas></div>
+<table><thead><tr><th>Received (local)</th><th>Seq</th><th>Cell</th><th>Charging</th><th>Tier</th><th>RSSI</th><th>Slots</th></tr></thead><tbody id="rows"></tbody></table>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const API = { base: "https://kyjrqpibtncvhxwcaovx.supabase.co/rest/v1", key: "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc" };
+const $ = (id) => document.getElementById(id);
+let chart;
+async function load() {
+  const unit = $("unit").value.trim().toUpperCase(), hours = +$("hours").value;
+  const since = new Date(Date.now() - hours * 3600e3).toISOString();
+  $("status").textContent = "loading…";
+  let rows = [];
+  try {
+    const r = await fetch(`${API.base}/packets?unit_id=eq.${unit}&received_at=gte.${since}&order=received_at.asc&limit=2000&select=received_at,seq,vbat_mv,chg,tier,rssi,slots`,
+      { headers: { apikey: API.key, Authorization: "Bearer " + API.key } });
+    rows = await r.json();
+    if (!Array.isArray(rows)) throw new Error(JSON.stringify(rows));
+  } catch (e) { $("status").textContent = "backend error: " + e.message; return; }
+  const last = rows[rows.length - 1];
+  $("t-v").textContent = last ? (last.vbat_mv / 1000).toFixed(3) + " V" : "—";
+  $("t-c").textContent = last ? (last.chg ? "yes" : "no") : "—";
+  $("t-c").className = last && last.chg ? "on" : "";
+  $("t-t").textContent = last ? new Date(last.received_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+  $("t-n").textContent = rows.length;
+  if (rows.length) {
+    const vs = rows.map((r) => r.vbat_mv);
+    $("t-mm").textContent = (Math.min(...vs) / 1000).toFixed(2) + " / " + (Math.max(...vs) / 1000).toFixed(2) + " V";
+    $("t-pct").textContent = Math.round(100 * rows.filter((r) => r.chg).length / rows.length) + " %";
+  }
+  const labels = rows.map((r) => new Date(r.received_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+  const data = {
+    labels,
+    datasets: [
+      { label: "Cell (V)", data: rows.map((r) => r.vbat_mv / 1000), borderColor: getComputedStyle(document.documentElement).getPropertyValue("--v"), tension: .2, pointRadius: 2, yAxisID: "y" },
+      { label: "Charging", data: rows.map((r) => (r.chg ? 1 : 0)), borderColor: getComputedStyle(document.documentElement).getPropertyValue("--chg"), stepped: true, pointRadius: 0, yAxisID: "y2", borderWidth: 1.5 },
+    ],
+  };
+  const fg = getComputedStyle(document.documentElement).getPropertyValue("--muted");
+  const opts = {
+    animation: false, responsive: true, maintainAspectRatio: false,
+    scales: {
+      x: { ticks: { color: fg, maxTicksLimit: 12, maxRotation: 0 }, grid: { color: "rgba(128,128,128,.15)" } },
+      y: { min: 2.9, max: 3.7, ticks: { color: fg }, title: { display: true, text: "V", color: fg }, grid: { color: "rgba(128,128,128,.15)" } },
+      y2: { position: "right", min: 0, max: 1, ticks: { color: fg, stepSize: 1, callback: (v) => (v ? "chg" : "") }, grid: { display: false } },
+    },
+    plugins: { legend: { labels: { color: fg } } },
+  };
+  if (chart) { chart.data = data; chart.options = opts; chart.update(); } else chart = new Chart($("c"), { type: "line", data, options: opts });
+  $("rows").innerHTML = rows.slice().reverse().slice(0, 200).map((r) =>
+    `<tr><td>${new Date(r.received_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td><td>${r.seq}</td><td>${(r.vbat_mv / 1000).toFixed(3)}</td><td class="${r.chg ? "on" : ""}">${r.chg ? "yes" : "no"}</td><td>${r.tier}</td><td>${r.rssi}</td><td>${r.slots}</td></tr>`).join("");
+  $("status").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + ", refreshes every minute";
+}
+$("unit").addEventListener("change", load); $("hours").addEventListener("change", load);
+load(); setInterval(load, 60000);
+</script>
+</body>
+</html>
