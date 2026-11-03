@@ -1,172 +1,109 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Bin Bypass Live</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="demo.js"></script>
-<style>
-body{font-family:-apple-system,sans-serif;background:#16161a;color:#eee;margin:0;padding:18px;max-width:720px;margin:auto}
-h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margin:10px 0}
-.slots{display:flex;gap:5px;margin:8px 0}
-.s{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;background:#333}
-.s1{background:#1d3a52}.s0{background:#20362a}.s255{background:#3a2020;color:#c66}
-.meta{color:#999;font-size:12px}
-#map{height:340px;border-radius:12px;margin:10px 0;background:#222}
-.leaflet-container{font:inherit}
-.pin{width:30px;height:30px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;
-     font:700 14px -apple-system,sans-serif;color:#0c1f13;box-shadow:0 1px 5px rgba(0,0,0,.6)}
-.pin.fresh{background:#4ade80}.pin.stale{background:#e0b040}
-.pin.demo{background:#9cc8ff;border-style:dashed}
-.badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;padding:1px 6px;border-radius:6px;background:#2a3a55;color:#9cc8ff;margin-left:4px}
-.toggle{font-size:12px;color:#bbb;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-.leaflet-popup-content-wrapper{background:#232329;color:#eee;border-radius:10px}
-.leaflet-popup-tip{background:#232329}
-.stats{display:none;margin-top:10px;border-top:1px solid #333;padding-top:10px}
-.stats.open{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stat b{display:block;font-size:19px;color:#4ade80}
-.stat span{font-size:11px;color:#999;line-height:1.3;display:block}
-.unitcard{cursor:pointer}
-.hint{font-size:11px;color:#666}
-</style></head><body>
-<h1>Bin Bypass Live — fleet (anywhere)</h1>
-<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a> · <a style="color:#7ab7ff" href="solar-live.html">solar rig live →</a><br><span id="updated" class="hint">checking data freshness…</span> <span class="hint">· build 2026-11-03.1</span><br><label class="toggle"><input type="checkbox" id="demoToggle" checked> show demo fleet</label> <span class="hint">· <span style="color:#4ade80">●</span> live unit · <span style="color:#9cc8ff">◌</span> demo unit (simulated Sydney sites, not real data)</span></div>
+<link rel="stylesheet" href="bb.css">
+</head><body><div class="app">
+<div class="head">
+  <div class="brand"><span class="mark">BB</span><span>Bin Bypass<br><small>live fleet</small></span></div>
+  <span class="chip money" id="hero-money">$0.00 ready</span>
+</div>
+<div class="chips">
+  <span class="chip ghost" id="f-live"><span class="dot live"></span>live</span>
+  <span class="chip ghost" id="f-stale"><span class="dot stale"></span>stale</span>
+  <span class="chip ghost" id="f-off"><span class="dot"></span>offline</span>
+  <label class="chip" style="cursor:pointer"><input type="checkbox" id="demoToggle" checked style="margin:0 2px 0 0;accent-color:var(--blue)"> demo fleet <span class="badge">DEMO</span></label>
+</div>
 <div id="map"></div>
-<div id="root">loading…</div>
+<div class="strip" id="strip"></div>
+<div class="grid" id="root"><div class="card">loading…</div></div>
+<div class="foot" id="updated">checking data freshness…</div>
+<div class="foot"><a href="insights.html">trial insights</a> · <a href="power.html">unit power</a> · <a href="solar-live.html">solar rig</a> · build 2026-11-04.p1</div>
+</div>
 <script>
 const SUPABASE_URL = "https://kyjrqpibtncvhxwcaovx.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // publishable, safe in browser (RLS read-only)
-
-async function sb(path){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
-  return r.json();
-}
-
-function ago(iso){
-  const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
-  if(s < 60) return Math.round(s) + "s ago";
-  if(s < 3600) return Math.round(s/60) + " min ago";
-  if(s < 86400) return (s/3600).toFixed(1) + " h ago";
-  return (s/86400).toFixed(1) + " days ago";
-}
-
-// ---- unit stats: derived client-side from slot_events (fine at pilot scale) ----
+const SUPABASE_ANON_KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // publishable, read-only via RLS
+const LABELS = { "C39C32B7": "Ferny Hills — fence trial", "78F02C81": "Bench unit (carrier #2)", "05F0F1B6": "Bench unit (carrier #6)" };
+const STALE_MS = 48 * 3600 * 1000, CENTS = 10;
+async function sb(path){ const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}}); return r.json(); }
+const money = n => "$" + (n * CENTS / 100).toFixed(2);
+function ago(iso){ const s=Math.max(0,(Date.now()-Date.parse(iso))/1000); if(s<60)return Math.round(s)+" s ago"; if(s<3600)return Math.round(s/60)+" min ago"; if(s<86400)return (s/3600).toFixed(1)+" h ago"; return (s/86400).toFixed(1)+" days ago"; }
+function fresh(iso){ const m=(Date.now()-Date.parse(iso))/60000; return m<30?"live":m<180?"stale":"offline"; }
 const statCache = {};
 async function unitStats(id){
-  const c = statCache[id];
-  if(c && Date.now()-c.t < 60000) return c.v;
+  const c = statCache[id]; if(c && Date.now()-c.t < 60000) return c.v;
   const ev = DEMO.isDemo(id) ? DEMO.events(id).slice(-1000) : await sb(`slot_events?unit_id=eq.${id}&select=slot,state,changed_at&order=changed_at.asc&limit=1000`);
-  const weekAgo = Date.now() - 7*24*3600*1000;
-  let deposits7 = 0, moved = 0, dwellSum = 0, dwellN = 0;
-  const openSince = {};                       // slot -> deposit time awaiting collection
-  for(const e of ev){
-    const t = Date.parse(e.changed_at);
-    if(e.state === 1){
-      openSince[e.slot] = t;
-      if(t >= weekAgo) deposits7++;
-    } else if(e.state === 0 && openSince[e.slot] != null){
-      moved++;
-      dwellSum += t - openSince[e.slot];
-      dwellN++;
-      delete openSince[e.slot];
-    } else if(e.state === 255){
-      delete openSince[e.slot];               // fault: don't count toward dwell
-    }
-  }
-  const dwellH = dwellN ? dwellSum/dwellN/3600000 : null;
-  const dwell = dwellH == null ? "—" : dwellH < 1 ? Math.round(dwellH*60)+" min" : dwellH.toFixed(1)+" h";
-  const v = {deposits7, moved, dwell, partial: ev.length === 1000};
-  statCache[id] = {t: Date.now(), v};
-  return v;
+  const weekAgo = Date.now() - 7*24*3600*1000; let deposits7=0, moved=0, dwellSum=0, dwellN=0; const openSince = {};
+  for(const e of ev){ const t = Date.parse(e.changed_at);
+    if(e.state===1){ openSince[e.slot]=t; if(t>=weekAgo) deposits7++; }
+    else if(e.state===0 && openSince[e.slot]!=null){ moved++; dwellSum += t-openSince[e.slot]; dwellN++; delete openSince[e.slot]; }
+    else if(e.state===255) delete openSince[e.slot]; }
+  const dh = dwellN ? dwellSum/dwellN/3600000 : null;
+  const v = { deposits7, moved, dwell: dh==null ? "—" : dh<1 ? Math.round(dh*60)+" min" : dh.toFixed(1)+" h" };
+  statCache[id] = {t:Date.now(), v}; return v;
 }
-function statsHtml(s){
-  return `<div class="stat"><b>${s.deposits7}</b><span>containers in, past 7 days</span></div>`+
-         `<div class="stat"><b>${s.dwell}</b><span>average dwell before collection</span></div>`+
-         `<div class="stat"><b>${s.moved}</b><span>containers moved, all time${s.partial?" (last 1000 events)":""}</span></div>`;
-}
-async function toggleStats(id){
-  const el = document.getElementById("st-"+CSS.escape(id));
-  if(!el) return;
-  if(el.classList.contains("open")){ el.classList.remove("open"); return; }
-  el.innerHTML = '<div class="stat"><span>loading…</span></div>';
-  el.classList.add("open");
-  el.innerHTML = statsHtml(await unitStats(id));
-}
-
+const statsHtml = s => `<div><b>${s.deposits7}</b><span>containers in, 7 days</span></div><div><b>${s.dwell}</b><span>avg dwell before collection</span></div><div><b>${s.moved}</b><span>moved, all time</span></div>`;
+async function toggleStats(id){ const el=document.getElementById("st-"+CSS.escape(id)); if(!el) return; if(el.classList.contains("open")){ el.classList.remove("open"); return; } el.innerHTML='<div><span>loading…</span></div>'; el.classList.add("open"); el.innerHTML = statsHtml(await unitStats(id)); }
 // ---- map ----
-const map = L.map("map",{scrollWheelZoom:false}).setView([-27.4,153.0],10);
-L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  {attribution:"Imagery: Esri World Imagery",maxZoom:19}).addTo(map);
-const markers = {};
-let fitted = false;
+const tiles = getComputedStyle(document.documentElement).getPropertyValue("--tiles").trim() || "light_all";
+const map = L.map("map",{scrollWheelZoom:false, zoomControl:true}).setView([-27.4,153.0],10);
+L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${tiles === "dark_all" ? "Dark" : "Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`,{attribution:"Esri, HERE, Garmin, OpenStreetMap contributors",maxZoom:16}).addTo(map);
+const markers = {}; let fitted = false;
 function plot(located){
   for(const u of located){
-    const fresh = (Date.now()-Date.parse(u.last_seen)) < 30*60*1000;
-    const icon = L.divIcon({html:`<div class="pin ${u.demo?"demo":fresh?"fresh":"stale"}">${u.occ}</div>`,
-                            className:"", iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-14]});
+    const cls = u.demo ? "demo" : fresh(u.last_seen);
+    const icon = L.divIcon({html:`<div class="pin ${cls}">${u.occ}</div>`, className:"", iconSize:[32,32], iconAnchor:[16,38], popupAnchor:[0,-34]});
     if(markers[u.unit_id]){ markers[u.unit_id].setLatLng([u.lat,u.lon]).setIcon(icon); }
     else {
-      const m = L.marker([u.lat,u.lon],{icon}).addTo(map);
-      m.bindPopup("loading…",{minWidth:230});
-      m.on("click", async ()=>{
-        m.setPopupContent(`<b>Unit ${u.unit_id}</b><br><span class="meta">fetching…</span>`);
-        const s = await unitStats(u.unit_id);
-        m.setPopupContent(
-          `<b>Unit ${u.unit_id}</b>${u.demo?' <span class="badge">DEMO</span>':''} — ${u.occ} container${u.occ===1?"":"s"} now<br>`+
-          `<span class="meta">updated ${ago(u.last_seen)} · ±${u.acc_m??"?"} m</span><br>`+
-          `In past 7 days: <b>${s.deposits7}</b><br>`+
-          `Avg dwell: <b>${s.dwell}</b><br>`+
-          `Total moved: <b>${s.moved}</b><br><a href="unit.html?unit=${u.unit_id}">full detail →</a>`);
-      });
+      const m = L.marker([u.lat,u.lon],{icon}).addTo(map); m.bindPopup("loading…",{minWidth:220});
+      m.on("click", async ()=>{ const s = await unitStats(u.unit_id);
+        m.setPopupContent(`<b>${u.label||("Unit "+u.unit_id)}</b>${u.demo?' <span class="badge">DEMO</span>':''}<br><span class="sub"><span class="dot ${cls}"></span>${cls} · ${ago(u.last_seen)}</span><br><b style="color:var(--money);font-size:18px">${money(u.occ)}</b> <span class="sub">${u.occ} container${u.occ===1?"":"s"} ready</span><br><span class="sub">${s.deposits7} in this week · dwell ${s.dwell}</span><br><a href="unit.html?unit=${u.unit_id}">View unit →</a>`); });
       markers[u.unit_id] = m;
     }
   }
-  for(const id in markers){ if(!located.some(u=>u.unit_id===id)){ map.removeLayer(markers[id]); delete markers[id]; } }
-  if(!fitted && located.length){
-    const realPins = located.filter(u=>!u.demo);
-    map.fitBounds((realPins.length?realPins:located).map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:17});
-    fitted = true;
-  }
+  if(!fitted && located.length){ const real = located.filter(u=>!u.demo); map.fitBounds((real.length?real:located).map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:16}); fitted = true; }
 }
-
-// ---- fleet cards ----
+// ---- fleet ----
 async function tick(){
   try{
-    const LABELS = { "C39C32B7": "Ferny Hills — fence trial unit", "78F02C81": "Bench unit (carrier #2)", "05F0F1B6": "Bench unit (carrier #6)" };
-    const STALE_MS = 48 * 3600 * 1000;   // anything quiet for two days is a bench relic, not fleet
     const real = (await sb("units?select=*&order=last_seen.desc"))
-      .filter(u => u.status !== "retired" && Date.now() - Date.parse(u.last_seen) < STALE_MS)
-      .map(u => ({ ...u, label: u.label || LABELS[u.unit_id] || "" }));
+      .filter(u => u.status !== "retired" && Date.now()-Date.parse(u.last_seen) < STALE_MS)
+      .map(u => ({...u, label: u.label || LABELS[u.unit_id] || ""}));
     const showDemo = document.getElementById("demoToggle").checked;
     const units = real.concat(showDemo ? DEMO.units() : []);
     const latest = await sb("packets?select=received_at&order=id.desc&limit=1");
-    if(latest.length){
-      const t = new Date(latest[0].received_at);
-      document.getElementById("updated").textContent =
-        `Data last updated ${ago(latest[0].received_at)} (${t.toLocaleString()}) · page checked ${new Date().toLocaleTimeString()}`;
-    } else {
-      document.getElementById("updated").textContent = "No data yet";
-    }
-    const located = [];
-    let h = "";
+    document.getElementById("updated").textContent = latest.length ? `data updated ${ago(latest[0].received_at)} · page checked ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · refreshes every 5 s` : "no data yet";
+    const located = []; let h = ""; let totOcc=0, nLive=0, nStale=0, nOff=0, realOcc=0;
     for(const u of units){
       const pk = u.demo ? DEMO.packets(u.unit_id,1) : await sb(`packets?unit_id=eq.${u.unit_id}&order=id.desc&limit=1`);
-      const slots = pk.length?JSON.parse(pk[0].slots):[];
-      const occ = slots.filter(v=>v===1).length;
+      const slots = pk.length ? JSON.parse(pk[0].slots) : [];
+      const occ = slots.filter(v=>v===1).length, flt = slots.filter(v=>v===255).length;
+      const cls = u.demo ? "demo" : fresh(u.last_seen);
+      if(!u.demo){ if(cls==="live") nLive++; else if(cls==="stale") nStale++; else nOff++; realOcc += occ; }
+      totOcc += occ;
       if(u.lat!=null) located.push({...u, occ});
-      const loc = u.lat!=null?` · <a style="color:#7ab7ff" href="https://maps.apple.com/?ll=${u.lat},${u.lon}" target="_blank" onclick="event.stopPropagation()">📍 ${Number(u.lat).toFixed(4)},${Number(u.lon).toFixed(4)}</a>`:"";
-      h+=`<div class="card unitcard" onclick="toggleStats('${u.unit_id}')"><b>${u.unit_id}</b>${u.demo?'<span class="badge">DEMO</span>':''} <span class="meta">${u.label||""} · ${occ}/6 in · updated <span title="${u.last_seen}">${ago(u.last_seen)}</span> · ${pk.length?pk[0].src:""} · ${pk.length&&pk[0].vbat_mv?pk[0].vbat_mv+"mV":""}${loc}</span> <span class="hint">tap for stats</span> <a href="unit.html?unit=${u.unit_id}" onclick="event.stopPropagation()" style="color:#7ab7ff;font-size:11px">detail →</a><div class="slots">`;
-      slots.forEach(v=>{h+=`<div class="s s${v}">${v===255?"✕":v}</div>`});
-      h+=`</div><div class="stats" id="st-${u.unit_id}"></div></div>`;
+      const vb = pk.length && pk[0].vbat_mv ? (pk[0].vbat_mv/1000).toFixed(2)+" V" : "";
+      const sig = pk.length && pk[0].rssi ? pk[0].rssi+" dBm" : "";
+      h += `<div class="unit" onclick="toggleStats('${u.unit_id}')">
+        <div class="top"><div><div class="name">${u.label || "Unit "+u.unit_id}${u.demo?'<span class="badge">DEMO</span>':''}</div><div class="label">${u.label ? "Unit "+u.unit_id : ""}</div></div>
+          <div class="value"><b>${money(occ)}</b><span>${occ} of 6 ready</span></div></div>
+        <div class="slots">${slots.map(v=>`<div class="s ${v===1?"in":v===255?"fault":""}">${v===1?"●":v===255?"✕":""}</div>`).join("")}</div>
+        <div class="meta"><span><span class="dot ${cls}"></span>${cls} · ${ago(u.last_seen)}</span><span>${[vb,sig,pk.length?pk[0].src:""].filter(Boolean).join(" · ")}</span><a href="unit.html?unit=${u.unit_id}" onclick="event.stopPropagation()">View unit →</a></div>
+        <div class="stats" id="st-${u.unit_id}"></div></div>`;
     }
+    document.getElementById("hero-money").textContent = money(realOcc) + " ready";
+    document.getElementById("strip").innerHTML =
+      `<div class="tile"><b class="money">${money(totOcc)}</b><span>ready across the network${showDemo?" (incl. demo)":""}</span></div>` +
+      `<div class="tile"><b>${totOcc}</b><span>containers in units now</span></div>` +
+      `<div class="tile"><b>${nLive}</b><span>live units</span></div>` +
+      `<div class="tile"><b>${nStale+nOff}</b><span>stale or offline</span></div>`;
     plot(located);
-    // rebuild cards but keep any open stats panels open
     const open = [...document.querySelectorAll(".stats.open")].map(e=>e.id);
     document.getElementById("root").innerHTML = h || '<div class="card">no units yet</div>';
-    for(const id of open){
-      const el = document.getElementById(id);
-      if(el){ el.classList.add("open"); el.innerHTML = statsHtml(await unitStats(id.slice(3))); }
-    }
-  }catch(e){document.getElementById("root").innerHTML='<div class="card">config needed: '+e+'</div>'}
+    for(const id of open){ const el=document.getElementById(id); if(el){ el.classList.add("open"); el.innerHTML = statsHtml(await unitStats(id.slice(3))); } }
+  }catch(e){ document.getElementById("root").innerHTML = '<div class="card">config needed: '+e+'</div>'; }
 }
-document.getElementById("demoToggle").addEventListener("change",()=>{fitted=false;tick();});
-setInterval(tick,5000);tick();
+document.getElementById("demoToggle").addEventListener("change",()=>{ fitted=false; tick(); });
+setInterval(tick,5000); tick();
 </script></body></html>
