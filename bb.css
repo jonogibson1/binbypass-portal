@@ -1,0 +1,97 @@
+/* Bin Bypass portal — design tokens lifted from the collector app reference
+   build (bin-bypass-diy/app). Light and dark, CVD-validated palettes. Green
+   = live/containers, amber = stale, grey = offline. Never red for empty. */
+:root{
+  --bg:#F1F0EA; --surface:#FFFFFF; --surface-2:#F6F5F1; --ink:#17211D; --muted:#5B6663; --line:#E6E4DC;
+  --shadow:0 1px 3px rgba(23,33,29,.08),0 6px 18px rgba(23,33,29,.07);
+  --green:#166534; --green-cta:#1B7A3F; --green-tint:#E2F1E7; --on-green:#FFFFFF; --money:#14532D;
+  --amber:#DC7A00; --amber-tint:#FAEEDC; --blue:#2563EB; --blue-tint:#E7EEFB; --grey:#8A948F; --grey-tint:#ECEEED;
+  --tiles:light_all;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0A0D0C; --surface:#182019; --surface-2:#0E1411; --ink:#EFF4F1; --muted:#9AA8A1; --line:#263029;
+  --shadow:0 1px 3px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.45);
+  --green:#28A55D; --green-cta:#28A55D; --green-tint:rgba(40,165,93,.16); --on-green:#07130B; --money:#3FBF74;
+  --amber:#D08004; --amber-tint:rgba(208,128,4,.16); --blue:#4C8DF6; --blue-tint:rgba(76,141,246,.16); --grey:#77837D; --grey-tint:rgba(119,131,125,.18);
+  --tiles:dark_all;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A0D0C; --surface:#182019; --surface-2:#0E1411; --ink:#EFF4F1; --muted:#9AA8A1; --line:#263029;
+  --shadow:0 1px 3px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.45);
+  --green:#28A55D; --green-cta:#28A55D; --green-tint:rgba(40,165,93,.16); --on-green:#07130B; --money:#3FBF74;
+  --amber:#D08004; --amber-tint:rgba(208,128,4,.16); --blue:#4C8DF6; --blue-tint:rgba(76,141,246,.16); --grey:#77837D; --grey-tint:rgba(119,131,125,.18);
+  --tiles:dark_all;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45}
+a{color:var(--blue);text-decoration:none}
+.app{max-width:960px;margin:0 auto;padding:14px 16px 48px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.brand .mark{width:34px;height:34px;border-radius:10px;background:var(--green);color:var(--on-green);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.brand small{font-weight:600;font-size:12px;color:var(--muted);letter-spacing:0}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;background:var(--surface);color:var(--ink);border:1px solid var(--line);white-space:nowrap}
+.chip.money{background:var(--green);color:var(--on-green);border-color:transparent;font-size:14px}
+.chip.ghost{background:transparent}
+.chip.on{background:var(--green);color:var(--on-green);border-color:transparent}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin:0 0 12px}
+.card h2{margin:0 0 10px;font-size:15px;font-weight:700}
+.sub{color:var(--muted);font-size:13px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--grey);vertical-align:middle;margin-right:6px}
+.dot.live{background:var(--green)}.dot.stale{background:var(--amber)}.dot.demo{background:var(--blue)}
+#map{height:380px;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);margin:0 0 12px;background:var(--surface-2)}
+#map.small{height:240px;margin:8px 0 6px}
+.leaflet-container{font:inherit;background:var(--surface-2)}
+.leaflet-popup-content-wrapper{background:var(--surface);color:var(--ink);border-radius:14px;box-shadow:var(--shadow)}
+.leaflet-popup-tip{background:var(--surface)}
+.leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.7)}
+/* app-style map pin: rounded square with a tail, count inside */
+.pin{position:relative;width:32px;height:32px;border-radius:10px;background:var(--green);color:var(--on-green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid rgba(255,255,255,.9)}
+.pin::after{content:"";position:absolute;left:50%;bottom:-7px;width:10px;height:10px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.pin.stale{background:var(--amber)}.pin.offline{background:var(--grey)}
+.pin.demo{background:var(--blue);border-style:dashed;border-color:rgba(255,255,255,.95)}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 12px}
+.tile{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px}
+.tile b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}
+.tile b.money{color:var(--money)}
+.tile span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.unit{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:8px}
+.unit .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.unit .name{font-weight:700;font-size:15px}
+.unit .label{color:var(--muted);font-size:13px}
+.unit .value{text-align:right}
+.unit .value b{display:block;font-size:20px;font-weight:800;color:var(--money);letter-spacing:-.02em}
+.unit .value span{font-size:11px;color:var(--muted)}
+.badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:var(--blue-tint);color:var(--blue);margin-left:6px;vertical-align:middle}
+.slots{display:flex;gap:6px}
+.s{flex:1;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1.5px solid var(--line);color:var(--muted);background:var(--surface-2)}
+.s.in{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.s.fault{background:var(--grey-tint);border-color:transparent;color:var(--grey);text-decoration:line-through}
+.unit .meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);gap:8px;flex-wrap:wrap}
+.unit .stats{display:none;border-top:1px solid var(--line);padding-top:10px;margin-top:2px;grid-template-columns:repeat(3,1fr);gap:8px}
+.unit .stats.open{display:grid}
+.unit .stats b{display:block;font-size:18px;font-weight:800;color:var(--ink)}
+.unit .stats span{font-size:11px;color:var(--muted);display:block;line-height:1.3}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--green-cta);color:var(--on-green);border-color:transparent}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hero .money{font-size:44px;font-weight:800;letter-spacing:-.03em;color:var(--money);line-height:1}
+.hero .money small{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:6px}
+.hero .right{text-align:right;font-size:13px;color:var(--muted)}
+.slotbig{display:flex;gap:8px;margin:12px 0 6px}
+.slotbig .s{height:56px;flex-direction:column;font-size:15px}
+.slotbig .s small{font-size:10px;font-weight:600;opacity:.8;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td,th{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.wrap{overflow-x:auto}
+svg.chart{width:100%;height:auto;display:block}
+details summary{cursor:pointer;font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details summary::after{content:"+";color:var(--muted);font-weight:400}
+details[open] summary::after{content:"–"}
+.foot{color:var(--muted);font-size:12px;text-align:center;padding:16px 0 0}
+.note{background:var(--blue-tint);color:var(--blue);border-radius:12px;padding:10px 14px;font-size:13px;margin:0 0 12px}
+@media (max-width:520px){ .app{padding:10px 12px 40px} #map{height:300px} .hero .money{font-size:36px} }
