@@ -53,7 +53,7 @@ async function load() {
   $("status").textContent = "loading…";
   let rows = [];
   try {
-    const r = await fetch(`${API.base}/packets?unit_id=eq.${unit}&received_at=gte.${since}&order=received_at.asc&limit=2000&select=received_at,seq,vbat_mv,chg,tier,rssi,slots`,
+    const r = await fetch(`${API.base}/packets?unit_id=eq.${encodeURIComponent(unit)}&received_at=gte.${since}&order=received_at.asc&limit=2000&select=received_at,seq,vbat_mv,chg,tier,rssi,slots`,
       { headers: { apikey: API.key, Authorization: "Bearer " + API.key } });
     rows = await r.json();
     if (!Array.isArray(rows)) throw new Error(JSON.stringify(rows));
@@ -88,8 +88,9 @@ async function load() {
     plugins: { legend: { labels: { color: fg } } },
   };
   if (chart) { chart.data = data; chart.options = opts; chart.update(); } else chart = new Chart($("c"), { type: "line", data, options: opts });
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   $("rows").innerHTML = rows.slice().reverse().slice(0, 200).map((r) =>
-    `<tr><td>${new Date(r.received_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td><td>${r.seq}</td><td>${(r.vbat_mv / 1000).toFixed(3)}</td><td class="${r.chg ? "on" : ""}">${r.chg ? "yes" : "no"}</td><td>${r.tier}</td><td>${r.rssi}</td><td>${r.slots}</td></tr>`).join("");
+    `<tr><td>${new Date(r.received_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(r.seq)}</td><td>${(Number(r.vbat_mv) / 1000).toFixed(3)}</td><td class="${r.chg ? "on" : ""}">${r.chg ? "yes" : "no"}</td><td>${esc(r.tier)}</td><td>${esc(r.rssi)}</td><td>${esc(r.slots)}</td></tr>`).join("");
   $("status").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + ", refreshes every minute";
 }
 $("unit").addEventListener("change", load); $("hours").addEventListener("change", load);

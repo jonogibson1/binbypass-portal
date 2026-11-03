@@ -26,7 +26,13 @@ const SUPABASE_URL = "https://kyjrqpibtncvhxwcaovx.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc"; // publishable, read-only via RLS
 const LABELS = { "C39C32B7": "Ferny Hills — fence trial", "78F02C81": "Bench unit (carrier #2)", "05F0F1B6": "Bench unit (carrier #6)" };
 const STALE_MS = 48 * 3600 * 1000, CENTS = 10;
-async function sb(path){ const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}}); return r.json(); }
+// Everything from the database is HTML-escaped on arrival: unit IDs, labels,
+// src, tier and the rest end up in innerHTML templates, and a packet's text
+// fields come from whatever reached the broker.
+const escHtml = (s) => s.replace(/[&<>"'`]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "`": "&#96;" }[c]));
+const clean = (v) => typeof v === "string" ? escHtml(v) : Array.isArray(v) ? v.map(clean) : (v && typeof v === "object") ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clean(x)])) : v;
+const UNIT_RE = /^[0-9A-F]{8}$/;
+async function sb(path){ const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}}); const j = clean(await r.json()); return Array.isArray(j) ? j.filter((x) => !("unit_id" in x) || UNIT_RE.test(x.unit_id) || String(x.unit_id).startsWith("demo-")) : j; }
 const money = n => "$" + (n * CENTS / 100).toFixed(2);
 function ago(iso){ const s=Math.max(0,(Date.now()-Date.parse(iso))/1000); if(s<60)return Math.round(s)+" s ago"; if(s<3600)return Math.round(s/60)+" min ago"; if(s<86400)return (s/3600).toFixed(1)+" h ago"; return (s/86400).toFixed(1)+" days ago"; }
 function fresh(iso){ const m=(Date.now()-Date.parse(iso))/60000; return m<30?"live":m<180?"stale":"offline"; }
@@ -102,7 +108,7 @@ async function tick(){
     const open = [...document.querySelectorAll(".stats.open")].map(e=>e.id);
     document.getElementById("root").innerHTML = h || '<div class="card">no units yet</div>';
     for(const id of open){ const el=document.getElementById(id); if(el){ el.classList.add("open"); el.innerHTML = statsHtml(await unitStats(id.slice(3))); } }
-  }catch(e){ document.getElementById("root").innerHTML = '<div class="card">config needed: '+e+'</div>'; }
+  }catch(e){ document.getElementById("root").innerHTML = '<div class="card">config needed: '+escHtml(String(e))+'</div>'; }
 }
 document.getElementById("demoToggle").addEventListener("change",()=>{ fitted=false; tick(); });
 setInterval(tick,5000); tick();
