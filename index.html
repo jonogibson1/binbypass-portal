@@ -28,7 +28,7 @@ h1{font-size:17px}.card{background:#232329;border-radius:12px;padding:14px;margi
 .hint{font-size:11px;color:#666}
 </style></head><body>
 <h1>Bin Bypass Live — fleet (anywhere)</h1>
-<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a> · <a style="color:#7ab7ff" href="solar-live.html">solar rig live →</a><br><span id="updated" class="hint">checking data freshness…</span> <span class="hint">· build 2026-10-28.1</span><br><label class="toggle"><input type="checkbox" id="demoToggle" checked> show demo fleet</label> <span class="hint">· <span style="color:#4ade80">●</span> live unit · <span style="color:#9cc8ff">◌</span> demo unit (simulated Sydney sites, not real data)</span></div>
+<div class="card meta">Live fleet view — refreshes every 5&nbsp;s. Pin number = containers in the unit right now. Tap a pin or a card for the unit's story. · <a style="color:#7ab7ff" href="insights.html">trial insights →</a> · <a style="color:#7ab7ff" href="solar-live.html">solar rig live →</a><br><span id="updated" class="hint">checking data freshness…</span> <span class="hint">· build 2026-11-03.1</span><br><label class="toggle"><input type="checkbox" id="demoToggle" checked> show demo fleet</label> <span class="hint">· <span style="color:#4ade80">●</span> live unit · <span style="color:#9cc8ff">◌</span> demo unit (simulated Sydney sites, not real data)</span></div>
 <div id="map"></div>
 <div id="root">loading…</div>
 <script>
@@ -121,8 +121,8 @@ function plot(located){
   }
   for(const id in markers){ if(!located.some(u=>u.unit_id===id)){ map.removeLayer(markers[id]); delete markers[id]; } }
   if(!fitted && located.length){
-    const demoPins = located.filter(u=>u.demo);
-    map.fitBounds((demoPins.length?demoPins:located).map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:17});
+    const realPins = located.filter(u=>!u.demo);
+    map.fitBounds((realPins.length?realPins:located).map(u=>[u.lat,u.lon]),{padding:[40,40],maxZoom:17});
     fitted = true;
   }
 }
@@ -130,7 +130,11 @@ function plot(located){
 // ---- fleet cards ----
 async function tick(){
   try{
-    const real = await sb("units?select=*&order=last_seen.desc");
+    const LABELS = { "C39C32B7": "Ferny Hills — fence trial unit", "78F02C81": "Bench unit (carrier #2)", "05F0F1B6": "Bench unit (carrier #6)" };
+    const STALE_MS = 48 * 3600 * 1000;   // anything quiet for two days is a bench relic, not fleet
+    const real = (await sb("units?select=*&order=last_seen.desc"))
+      .filter(u => u.status !== "retired" && Date.now() - Date.parse(u.last_seen) < STALE_MS)
+      .map(u => ({ ...u, label: u.label || LABELS[u.unit_id] || "" }));
     const showDemo = document.getElementById("demoToggle").checked;
     const units = real.concat(showDemo ? DEMO.units() : []);
     const latest = await sb("packets?select=received_at&order=id.desc&limit=1");

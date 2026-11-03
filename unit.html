@@ -68,8 +68,10 @@ function txt(p,x,y,s,anc){const e=el(p,"text",{x,y,"text-anchor":anc||"middle",f
 
 let map, marker;
 async function tick(){
-  document.getElementById("title").textContent="Unit "+unit;
+  const LABELS = { "C39C32B7": "Ferny Hills — fence trial unit", "78F02C81": "Bench unit (carrier #2)", "05F0F1B6": "Bench unit (carrier #6)" };
   const u=(await sb(`units?unit_id=eq.${unit}&select=*`))[0];
+  const label = (u && u.label) || LABELS[unit] || "";
+  document.getElementById("title").textContent = "Unit " + unit + (label ? " — " + label : "");
   const pkts=await sb(`packets?unit_id=eq.${unit}&select=*&order=id.desc&limit=200`);
   if(!u||!pkts.length){document.getElementById("sub").textContent="no data for this unit yet";return;}
   const latest=pkts[0];
