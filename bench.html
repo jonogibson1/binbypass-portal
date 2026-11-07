@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bin Bypass Bench</title>
+<style>
+/* Bench commissioning for Bin Bypass LIVE units over Web Bluetooth.
+   Chrome or Edge on the Mac, served from localhost (see README.md). */
+:root{--bg:#f3f1ec;--fg:#1d1f1b;--muted:#5e615a;--line:#d3d0c6;--panel:#fff;--soft:#f7f6f2;
+  --ok:#1f7a3f;--okbg:#e3f2e8;--warn:#a85400;--warnbg:#fbeedd;--bad:#c8322b;--badbg:#fbe4e2;--acc:#1f5f3a;--run:#2d5fa8;
+  --mono:"SF Mono",Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141613;--fg:#e8e6df;--muted:#a2a59b;--line:#363932;--panel:#1d201c;--soft:#232621;
+  --ok:#4fc27a;--okbg:#1d3325;--warn:#f0a040;--warnbg:#3a2c18;--bad:#ff6a5e;--badbg:#3d1f1c;--acc:#3f9c62;--run:#6ea0ec;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141613;--fg:#e8e6df;--muted:#a2a59b;--line:#363932;--panel:#1d201c;--soft:#232621;
+  --ok:#4fc27a;--okbg:#1d3325;--warn:#f0a040;--warnbg:#3a2c18;--bad:#ff6a5e;--badbg:#3d1f1c;--acc:#3f9c62;--run:#6ea0ec;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.45;padding:16px 16px 48px}
+main{max-width:1040px;margin:0 auto;display:grid;gap:14px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+h1{font-size:20px;margin:0}
+h2{font-size:16px;margin:0}
+.stepno{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:13px;font-weight:700;margin-right:10px;flex:none}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.step.locked{opacity:.5}
+.stephead{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.stephead .grow{flex:1}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
+button.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+button.big{font-size:16px;padding:12px 22px}
+button.link{background:none;border:0;padding:4px 6px;color:var(--muted);text-decoration:underline;font-size:13px}
+button:disabled{opacity:.4;cursor:default}
+.muted{color:var(--muted);font-size:13px}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--soft)}
+.chip.ok{background:var(--okbg);color:var(--ok);border-color:transparent}
+.unitcard{display:flex;flex-wrap:wrap;gap:18px;margin-top:12px}
+.unitcard div{min-width:110px}
+.k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.v{font-family:var(--mono);font-size:15px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td{padding:9px 8px;border-top:1px solid var(--line);vertical-align:top}
+td.name{font-weight:600;white-space:nowrap;width:120px}
+td.st{width:92px}
+td.act{width:70px;text-align:right}
+.badge{display:inline-block;min-width:66px;text-align:center;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700}
+.badge.pass{background:var(--okbg);color:var(--ok)}
+.badge.fail{background:var(--badbg);color:var(--bad)}
+.badge.warn{background:var(--warnbg);color:var(--warn)}
+.badge.run{color:var(--run);border:1px solid var(--run)}
+.badge.idle{color:var(--muted);border:1px solid var(--line)}
+.badge.skip{color:var(--muted);border:1px dashed var(--line)}
+@media (max-width:640px){
+  #tests tr{display:grid;grid-template-columns:1fr auto auto;align-items:center;border-top:1px solid var(--line);padding:6px 0}
+  #tests td{border:0;padding:4px 6px;width:auto}
+  #tests td:nth-child(3){grid-column:1/-1;order:4}
+  #tests td.act{order:3}
+}
+.reading{font-family:var(--mono);font-size:12.5px;color:var(--muted);word-break:break-word}
+.need{font-size:12px;color:var(--muted)}
+.summary{margin-top:10px;font-weight:600}
+.slots{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0}
+@media (max-width:640px){.slots{grid-template-columns:repeat(3,1fr)}}
+.slot{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;background:var(--soft);transition:background .2s}
+.slot .n{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.slot .mm{font-family:var(--mono);font-size:22px;font-weight:700;margin:4px 0}
+.slot .s{font-size:12px;font-weight:700}
+.slot.occ{background:var(--okbg);border-color:var(--ok)}.slot.occ .s{color:var(--ok)}
+.slot.free .s{color:var(--muted)}
+.slot.none{background:var(--badbg);border-color:transparent}.slot.none .s{color:var(--bad)}
+.livegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.livegrid{grid-template-columns:1fr}}
+.box{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--soft)}
+progress{width:100%;height:10px;margin-top:10px}
+pre#log{font-family:var(--mono);font-size:12px;line-height:1.4;margin:10px 0 0;max-height:360px;overflow:auto;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-all}
+input[type=text]{font:inherit;font-family:var(--mono);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--fg);flex:1;min-width:160px}
+label.cb{font-size:13px;display:inline-flex;gap:6px;align-items:center}
+details summary{cursor:pointer;font-weight:600}
+.callout{border-left:4px solid var(--run);background:var(--soft);padding:10px 12px;border-radius:6px;margin-top:10px;font-size:14px}
+.callout.ok{border-color:var(--ok)}.callout.bad{border-color:var(--bad)}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Bin Bypass bench</h1>
+    <div class="muted">Fleet power and remote control for every unit, then Bluetooth bench steps: connect, test, watch live, install deploy firmware.</div>
+  </div>
+  <span id="conn" class="chip">no unit</span>
+</header>
+
+<!-- 0 FLEET: power + remote for every live unit (no Bluetooth needed) -->
+<style>
+.fleet{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ucard{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--soft);cursor:pointer;text-align:left;font:inherit;color:inherit;display:block;width:100%}
+.ucard.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc) inset}
+.ucard .id{font-family:var(--mono);font-weight:700;font-size:15px}
+.ucard .lbl{font-size:12px;color:var(--muted);margin:2px 0 8px;min-height:16px}
+.ucard .big{font-family:var(--mono);font-size:24px;font-weight:700}
+.ucard .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.ucard canvas{width:100%;height:46px;display:block;margin-top:8px}
+.chg-on{color:var(--ok);font-weight:700}.chg-off{color:var(--muted)}
+.stale{color:var(--warn)}.dead{color:var(--bad)}
+.tiles6{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:10px 0}
+.tile6{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--soft)}
+.tile6 b{display:block;font-family:var(--mono);font-size:17px}
+.bigchart{position:relative;height:260px;margin-top:6px}
+.cmds{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+button.danger{color:var(--bad);border-color:var(--bad)}
+.pk{font-size:12.5px;font-family:var(--mono)}
+.pk td{padding:4px 6px}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 16px;margin-top:6px}
+.dlbar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}.dlbar i{display:block;height:100%;background:var(--run)}
+</style>
+<section class="step" id="s0">
+  <div class="stephead"><span class="stepno">0</span><h2 class="grow">Fleet power</h2>
+    <label class="muted">Window <select id="f-hours"><option value="6">6 h</option><option value="24" selected>24 h</option><option value="72">3 days</option><option value="168">7 days</option></select></label>
+    <span id="f-status" class="muted">loading…</span></div>
+  <div class="muted" style="margin:-4px 0 10px">Every unit that reported in the last 3 days, from the backend. Click a unit for its chart, remote commands and packets. Connecting a unit over Bluetooth below selects it here.</div>
+  <div id="fleet" class="fleet"></div>
+  <div id="f-detail" style="margin-top:14px" hidden>
+    <div class="row" style="justify-content:space-between"><h2 id="d-title">—</h2><span id="d-helper" class="chip">helper…</span></div>
+    <div class="tiles6">
+      <div class="tile6"><span class="k">Cell now</span><b id="d-v">—</b></div>
+      <div class="tile6"><span class="k">Charging</span><b id="d-c">—</b></div>
+      <div class="tile6"><span class="k">Time charging</span><b id="d-pct">—</b></div>
+      <div class="tile6"><span class="k">Cell min / max</span><b id="d-mm">—</b></div>
+      <div class="tile6"><span class="k">Last packet</span><b id="d-t">—</b></div>
+      <div class="tile6"><span class="k">Firmware · signal</span><b id="d-fw">—</b></div>
+      <div class="tile6"><span class="k">Update download</span><b id="d-dl">—</b><div class="dlbar"><i id="d-dlbar" style="width:0"></i></div></div>
+    </div>
+    <div class="bigchart"><canvas id="d-chart"></canvas></div>
+    <div class="box" style="margin-top:12px">
+      <b>Remote commands</b> <span class="muted">signed on this Mac, the unit acts at its next session (bench about 5 min, deploy hourly)</span>
+      <div class="cmds">
+        <button class="primary" data-fverb="TEST">Run test</button>
+        <button data-fverb="LOC">Get GPS fix</button>
+        <button data-fverb="PING">Send status now</button>
+        <button data-fverb="FAST">Fast mode (2 h)</button>
+        <button class="danger" data-fverb="RESET">Restart</button>
+      </div>
+      <p class="muted" id="d-dn" style="margin:8px 0 0">—</p>
+    </div>
+    <details class="box" style="margin-top:12px" id="d-reportbox"><summary>Last remote test report <span id="d-rwhen" class="muted"></span></summary><div id="d-report" class="muted">No report yet. Press Run test.</div></details>
+    <details class="box" style="margin-top:12px"><summary>Recent packets</summary>
+      <div style="overflow-x:auto"><table class="pk"><thead><tr><td class="k">Received</td><td class="k">Seq</td><td class="k">Cell</td><td class="k">Chg</td><td class="k">Tier</td><td class="k">RSSI</td><td class="k">FW</td><td class="k">Slots</td></tr></thead><tbody id="d-rows"></tbody></table></div>
+    </details>
+  </div>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(() => {
+"use strict";
+const API = { base: "https://kyjrqpibtncvhxwcaovx.supabase.co/rest/v1", key: "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc" };
+const HELPER = "http://127.0.0.1:8795";
+// What each unit is physically, so the cards say it without remembering.
+const LABELS = {
+  C39C32B7: "Fence 1 · two panels · R15 2k",
+  "05F0F1B6": "Fence 2 · one panel · R15 3.9k",
+};
+const g = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const hdr = { headers: { apikey: API.key, Authorization: "Bearer " + API.key }, cache: "no-store" };
+const hm = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const ago = (s) => s < 90 ? Math.round(s) + " s ago" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 172800 ? (s / 3600).toFixed(1) + " h ago" : Math.round(s / 86400) + " d ago";
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let sel = null, units = [], series = {}, big = null, helperOk = false;
+try { sel = new URLSearchParams(location.search).get("unit") || localStorage.getItem("bb-fleet-sel"); } catch (e) {}
+
+async function fetchSeries(u, hours) {
+  const since = new Date(Date.now() - hours * 3600e3).toISOString();
+  const r = await fetch(`${API.base}/packets?unit_id=eq.${encodeURIComponent(u)}&received_at=gte.${since}&order=received_at.asc&limit=3000&select=received_at,seq,vbat_mv,chg,tier,rssi,fw,slots`, hdr);
+  const j = await r.json(); return Array.isArray(j) ? j : [];
+}
+function spark(cv, rows) {
+  const w = cv.clientWidth || 200, h = 46, dpr = window.devicePixelRatio || 1;
+  cv.width = w * dpr; cv.height = h * dpr; const c = cv.getContext("2d"); c.scale(dpr, dpr); c.clearRect(0, 0, w, h);
+  if (rows.length < 2) return;
+  const t0 = Date.parse(rows[0].received_at), t1 = Date.parse(rows[rows.length - 1].received_at) || t0 + 1;
+  const x = (r) => ((Date.parse(r.received_at) - t0) / Math.max(1, t1 - t0)) * w;
+  c.fillStyle = css("--okbg"); // charging bands
+  for (let i = 0; i < rows.length - 1; i++) if (rows[i].chg) c.fillRect(x(rows[i]), 0, Math.max(1, x(rows[i + 1]) - x(rows[i])), h);
+  const lo = 3.0, hi = 3.5, y = (v) => h - 3 - ((Math.min(hi, Math.max(lo, v / 1000)) - lo) / (hi - lo)) * (h - 6);
+  c.strokeStyle = css("--run"); c.lineWidth = 1.5; c.beginPath();
+  rows.forEach((r, i) => (i ? c.lineTo(x(r), y(r.vbat_mv)) : c.moveTo(x(r), y(r.vbat_mv)))); c.stroke();
+}
+function renderFleet() {
+  g("fleet").innerHTML = units.map((u) => {
+    const rows = series[u.unit_id] || [], last = rows[rows.length - 1];
+    const v = last ? last.vbat_mv : u.vbat_mv, chg = last ? last.chg : u.chg, age = u.age_s;
+    const pct = rows.length ? Math.round(100 * rows.filter((r) => r.chg).length / rows.length) : null;
+    const ageCls = age > 3 * (u.expected_s || 3600) ? "dead" : age > 1.5 * (u.expected_s || 3600) ? "stale" : "";
+    return `<button class="ucard${u.unit_id === sel ? " sel" : ""}" data-u="${esc(u.unit_id)}">
+      <div class="id">${esc(u.unit_id)}</div><div class="lbl">${esc(LABELS[u.unit_id] || u.label || "")}</div>
+      <div><span class="big">${v ? (v / 1000).toFixed(2) + " V" : "—"}</span> <span class="${chg ? "chg-on" : "chg-off"}">${chg ? "charging" : "not charging"}</span></div>
+      <div class="meta"><span class="${ageCls}">${ago(age)}</span> · fw ${esc((last && last.fw) || u.fw || "?")} · ${pct === null ? "—" : pct + "% charging"}</div>
+      <canvas></canvas></button>`;
+  }).join("") || '<div class="muted">No unit has reported in the last 3 days.</div>';
+  for (const b of g("fleet").querySelectorAll(".ucard")) {
+    spark(b.querySelector("canvas"), series[b.dataset.u] || []);
+    b.addEventListener("click", () => select(b.dataset.u));
+  }
+}
+function renderDetail() {
+  if (!sel) { g("f-detail").hidden = true; return; }
+  g("f-detail").hidden = false;
+  const rows = series[sel] || [], last = rows[rows.length - 1], u = units.find((x) => x.unit_id === sel);
+  g("d-title").textContent = sel + (LABELS[sel] ? " · " + LABELS[sel] : "");
+  g("d-v").textContent = last ? (last.vbat_mv / 1000).toFixed(3) + " V" : "—";
+  g("d-c").textContent = last ? (last.chg ? "yes" : "no") : "—"; g("d-c").className = last && last.chg ? "chg-on" : "";
+  g("d-pct").textContent = rows.length ? Math.round(100 * rows.filter((r) => r.chg).length / rows.length) + " %" : "—";
+  if (rows.length) { const vs = rows.map((r) => r.vbat_mv); g("d-mm").textContent = (Math.min(...vs) / 1000).toFixed(2) + " / " + (Math.max(...vs) / 1000).toFixed(2); } else g("d-mm").textContent = "—";
+  g("d-t").textContent = last ? hm(Date.parse(last.received_at)) + (u ? " (" + ago(u.age_s) + ")" : "") : "—";
+  g("d-fw").textContent = last ? `${last.fw || "?"} · ${last.rssi || "—"}` : "—";
+  const fg = css("--muted"), data = {
+    labels: rows.map((r) => Date.parse(r.received_at)),
+    datasets: [
+      { label: "Cell (V)", data: rows.map((r) => r.vbat_mv / 1000), borderColor: css("--run"), tension: .2, pointRadius: 0, borderWidth: 1.8, yAxisID: "y" },
+      { label: "Charging", data: rows.map((r) => (r.chg ? 1 : 0)), borderColor: css("--ok"), backgroundColor: css("--okbg"), fill: true, stepped: true, pointRadius: 0, borderWidth: 1, yAxisID: "y2" },
+    ] };
+  const opts = { animation: false, responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+    scales: {
+      x: { type: "linear", ticks: { color: fg, maxTicksLimit: 10, callback: (v) => { const d = new Date(v); return +g("f-hours").value > 24 ? d.toLocaleString([], { weekday: "short", hour: "2-digit" }) : hm(v); } }, grid: { color: "rgba(128,128,128,.15)" } },
+      y: { min: 2.9, max: 3.6, ticks: { color: fg }, title: { display: true, text: "Cell V", color: fg }, grid: { color: "rgba(128,128,128,.15)" } },
+      y2: { position: "right", min: 0, max: 1, ticks: { color: fg, stepSize: 1, callback: (v) => (v ? "chg" : "") }, grid: { display: false } } },
+    plugins: { legend: { labels: { color: fg } }, tooltip: { callbacks: { title: (it) => new Date(it[0].parsed.x).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) } } } };
+  if (window.Chart) { if (big) { big.data = data; big.options = opts; big.update(); } else big = new Chart(g("d-chart"), { type: "line", data, options: opts }); }
+  g("d-rows").innerHTML = rows.slice().reverse().slice(0, 60).map((x) =>
+    `<tr><td>${new Date(x.received_at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(x.seq)}</td><td>${(x.vbat_mv / 1000).toFixed(3)}</td><td class="${x.chg ? "chg-on" : ""}">${x.chg ? "yes" : "no"}</td><td>${esc(x.tier)}</td><td>${esc(x.rssi)}</td><td>${esc(x.fw)}</td><td>${esc(x.slots)}</td></tr>`).join("");
+}
+async function helper(path, body) {
+  const r = await fetch(HELPER + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const t = await r.text(); if (!r.ok) throw new Error(t.trim() || "HTTP " + r.status); return t;
+}
+function renderReport(r) {
+  if (!r) { g("d-report").textContent = "No report yet. Press Run test."; g("d-rwhen").textContent = ""; return; }
+  g("d-rwhen").textContent = r.epoch ? "· " + new Date(r.epoch * 1000).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+  const c = r.charger || {}, v = r.vbat_mv || [], cell = r.cell || {}, fx = r.fix || {};
+  g("d-report").innerHTML = `<div class="rgrid">
+    <div><div class="k">Charger</div><b>${esc(c.state)}</b><div class="muted">STAT low ${esc(c.low_pct)}%, ${esc(c.edges)} edges in 3 s</div></div>
+    <div><div class="k">Cell during test</div><b>${(v[0] / 1000).toFixed(3)} → ${(v[1] / 1000).toFixed(3)} V</b><div class="muted">tier ${esc(r.tier)} · board ${esc(r.temp_c)} °C</div></div>
+    <div><div class="k">Cellular</div><b>${esc(cell.status)} ${esc(cell.why)}</b><div class="muted">${esc(cell.rssi)} dBm · ${esc(cell.fails)} fails · seq ${esc(cell.seq)}</div></div>
+    <div><div class="k">GPS</div><b>${fx.has ? "fix " + Math.round((fx.age_s || 0) / 3600) + " h old" : "no fix"}</b><div class="muted">clock ${esc(r.clock)}</div></div>
+    <div><div class="k">Running</div><b>${esc(r.fw)} ${esc(r.env)}</b><div class="muted">up ${Math.round((r.up_s || 0) / 360) / 10} h${r.fast ? " · fast mode" : ""}</div></div>
+    <div><div class="k">Sensors</div><b>${esc((r.sensors || []).join(" "))}</b><div class="muted">range ${esc((r.range_mm || []).join(", "))} mm</div></div></div>`;
+}
+async function loadRemote() {
+  if (!sel) return;
+  try {
+    const s = JSON.parse(await helper("/remote/state", { unit: sel }));
+    helperOk = true; g("d-helper").textContent = "helper connected"; g("d-helper").className = "chip ok";
+    const d = s.fw && s.fw.fwdl;
+    if (d) { g("d-dl").textContent = d.ok ? d.ver + " ready" : `${d.ver} ${Math.round(100 * d.got / d.of)}%`; g("d-dlbar").style.width = (100 * d.got / d.of) + "%"; }
+    else { g("d-dl").textContent = "none"; g("d-dlbar").style.width = "0"; }
+    const dn = s.dn;
+    g("d-dn").textContent = !dn ? "No command queued for this unit."
+      : dn.state === "queued" ? `${dn.verb} queued ${dn.epoch ? hm(dn.epoch * 1000) : ""}: waiting for the unit's next session.`
+      : `Last command done: ${dn.verb}${dn.epoch ? " at " + hm(dn.epoch * 1000) : ""}.`;
+    renderReport(s.test);
+  } catch (e) {
+    helperOk = false; g("d-helper").textContent = "helper not running"; g("d-helper").className = "chip";
+    g("d-dn").textContent = "Remote commands need the helper on this Mac: node bench/dfu_helper.mjs";
+  }
+  for (const b of document.querySelectorAll("button[data-fverb]")) b.disabled = !helperOk;
+}
+for (const b of document.querySelectorAll("button[data-fverb]")) b.addEventListener("click", async () => {
+  const verb = b.dataset.fverb; if (!sel) return;
+  if (verb === "RESET" && !confirm(`Restart ${sel} at its next session?`)) return;
+  b.disabled = true;
+  try { await helper("/remote/send", { unit: sel, verb }); g("d-dn").textContent = `${verb} queued for ${sel}.`; }
+  catch (e) { g("d-dn").textContent = "Send failed: " + e.message; }
+  b.disabled = false; loadRemote();
+});
+function select(u) {
+  sel = u; try { localStorage.setItem("bb-fleet-sel", u); } catch (e) {}
+  for (const b of g("fleet").querySelectorAll(".ucard")) b.classList.toggle("sel", b.dataset.u === u);
+  renderDetail(); loadRemote();
+  if (!series[u]) refresh();
+}
+async function refresh() {
+  g("f-status").textContent = "refreshing…";
+  try {
+    const r = await fetch(`${API.base}/unit_live?select=unit_id,label,last_packet_at,vbat_mv,chg,fw,age_s,expected_s`, hdr);
+    const all = await r.json();
+    units = (Array.isArray(all) ? all : []).filter((u) => /^[0-9A-F]{8}$/.test(u.unit_id) && u.age_s < 3 * 86400)
+      .sort((a, b) => (LABELS[b.unit_id] ? 1 : 0) - (LABELS[a.unit_id] ? 1 : 0) || a.age_s - b.age_s);
+    if (sel && !units.find((u) => u.unit_id === sel) && /^[0-9A-F]{8}$/.test(sel)) units.push({ unit_id: sel, age_s: 9e9 });
+    if (!sel && units.length) sel = units[0].unit_id;
+    const hours = +g("f-hours").value;
+    const res = await Promise.all(units.map((u) => fetchSeries(u.unit_id, hours).catch(() => [])));
+    series = {}; units.forEach((u, i) => (series[u.unit_id] = res[i]));
+    renderFleet(); renderDetail(); loadRemote();
+    g("f-status").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " · every minute";
+  } catch (e) { g("f-status").textContent = "backend error: " + e.message; }
+}
+// Bluetooth connect in step 1 writes "connected · <ID>" into #conn: follow it.
+const conn = document.getElementById("conn");
+if (conn) new MutationObserver(() => { const m = /([0-9A-F]{8})/.exec(conn.textContent); if (m && m[1] !== sel) select(m[1]); }).observe(conn, { childList: true, characterData: true, subtree: true });
+g("f-hours").addEventListener("change", refresh);
+window.addEventListener("resize", () => { for (const b of g("fleet").querySelectorAll(".ucard")) spark(b.querySelector("canvas"), series[b.dataset.u] || []); });
+refresh(); setInterval(refresh, 60000);
+})();
+</script>
+
+
+<!-- 1 CONNECT -->
+<section class="step" id="s1">
+  <div class="stephead"><span class="stepno">1</span><h2 class="grow">Connect a unit</h2>
+    <button id="btn-disconnect" class="link" disabled>Disconnect</button></div>
+  <div class="row">
+    <button id="btn-connect" class="primary big">Connect to a unit</button>
+    <span class="muted">Power the unit, then pick <b>BinBypass-Live-&lt;ID&gt;</b> in the Chrome picker.</span>
+  </div>
+  <div id="unitcard" class="unitcard" hidden>
+    <div><div class="k">Unit</div><div class="v" id="u-id">—</div></div>
+    <div><div class="k">Firmware</div><div class="v" id="u-fw">—</div></div>
+    <div><div class="k">Build</div><div class="v" id="u-build">—</div></div>
+    <div><div class="k">Battery</div><div class="v" id="u-vbat">—</div></div>
+    <div><div class="k">Signal</div><div class="v" id="u-rssi">—</div></div>
+  </div>
+  <div id="prodnote" class="callout" hidden><span id="prodnote-text">This unit is running deploy firmware, which locks the test commands. Install the test firmware first, then test.</span>
+    <div class="row" style="margin-top:8px"><button id="btn-install-test" class="primary">Install test firmware</button><span class="muted" id="testfw-label"></span></div></div>
+</section>
+
+<!-- 2 TEST -->
+<section class="step locked" id="s2">
+  <div class="stephead"><span class="stepno">2</span><h2 class="grow">Test every system</h2>
+    <label class="cb"><input type="checkbox" id="opt-gnss"> include GPS fix (outside, patch antenna on, up to 5 min)</label></div>
+  <div class="row"><button id="btn-runall" class="primary big" disabled>Run all tests</button>
+    <span class="muted">About 2 minutes with the SIM and LTE antenna fitted. Each row can be re-run on its own.</span></div>
+  <table id="tests" style="margin-top:12px"><tbody></tbody></table>
+  <div class="summary" id="summary"></div>
+</section>
+
+<!-- 3 LIVE -->
+<section class="step locked" id="s3">
+  <div class="stephead"><span class="stepno">3</span><h2 class="grow">Live</h2>
+    <button id="btn-live" class="primary" disabled>Start live view</button>
+    <button id="btn-livepub" disabled>Send a live packet</button></div>
+  <div class="muted">Wave a hand or a bin over each sensor. A slot reads occupied under <span id="thr">80</span> mm. The right-hand box is what the backend last received from this unit.</div>
+  <div class="slots" id="slots"></div>
+  <div class="livegrid">
+    <div class="box"><div class="k">On the unit</div><div class="reading" id="live-unit" style="margin-top:6px">—</div></div>
+    <div class="box"><div class="k">In the backend</div><div class="reading" id="live-backend" style="margin-top:6px">—</div></div>
+  </div>
+</section>
+
+<!-- 4 DEPLOY -->
+<section class="step locked" id="s4">
+  <div class="stephead"><span class="stepno">4</span><h2 class="grow">Install firmware for deploy</h2></div>
+  <div class="row">
+    <button id="btn-deploy" class="primary big" disabled>Install deploy firmware</button>
+    <label class="cb"><input type="checkbox" id="opt-override"> install even though some tests have not passed</label>
+  </div>
+  <div class="muted" id="deploy-info" style="margin-top:6px">Looking for the staged deploy firmware…</div>
+  <div id="dfu-step" class="callout" hidden></div>
+  <progress id="dfuprog" value="0" max="100" hidden></progress>
+  <div class="row" style="margin-top:8px"><button id="btn-otherfw" class="link">Install a different firmware zip…</button><input type="file" id="fw-file" accept=".zip" hidden></div>
+</section>
+
+<!-- TRANSCRIPT -->
+<section class="step">
+  <details id="logbox">
+    <summary>Transcript and console</summary>
+    <form id="cmdform" class="row" style="margin-top:10px">
+      <input type="text" id="cmd" placeholder="SELFTEST, STAT, I2C, RANGE, MODEM, PUB, LOC, LIST, FOTA, VERBOSE ON, RESET" disabled>
+      <button id="btn-send" disabled>Send</button>
+      <input type="text" id="authkey" placeholder="AUTH key (deploy builds)" style="max-width:200px;flex:none">
+      <button id="btn-record" type="button" disabled>Copy test record</button>
+      <button id="btn-clear" type="button">Clear</button>
+    </form>
+    <pre id="log"></pre>
+  </details>
+</section>
+</main>
+
+<script>
+"use strict";
+// ================================================================ constants
+const NUS = "6e400001-b5a3-f393-e0a9-e50e24dcca9e", NUS_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e", NUS_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+const DFU_SVC = "00001530-1212-efde-1523-785feabcd123", DFU_CP = "00001531-1212-efde-1523-785feabcd123", DFU_PKT = "00001532-1212-efde-1523-785feabcd123";
+// Public read-only key, the same one the map app ships (RLS: anon = SELECT on views).
+const API = { base: "https://kyjrqpibtncvhxwcaovx.supabase.co/rest/v1", key: "sb_publishable_Q-XPiRdglnQscTd1Alh5UQ_hs4TWIsc" };
+const THRESHOLD_MM = 80;                 // firmware RANGE_THRESHOLD_MM
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Firmware 0.3.4 printed I2C addresses as bare 0x.. (not JSON); quote them before parsing.
+const json = (s) => { try { return JSON.parse(String(s).replace(/([\[,])(0x[0-9a-fA-F]+)(?=[,\]])/g, '$1"$2"')); } catch (e) { return null; } };
+
+// ================================================================ state
+let dev = null, tx = null, unitId = null, lineBuf = "", self = null;
+let liveOn = false, testing = false, staged = null;
+const listeners = new Set();
+const record = { unit: null, fw_tested: null, started: new Date().toISOString(), tests: {}, deployed: null };
+
+// ================================================================ transcript
+const logEl = $("log");
+function out(line) {
+  const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 4;
+  logEl.textContent += `${new Date().toTimeString().slice(0, 8)}  ${line}\n`;
+  if (logEl.textContent.length > 300000) logEl.textContent = logEl.textContent.slice(-200000);
+  if (atBottom) logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ================================================================ BLE link
+function onRx(e) {
+  lineBuf += new TextDecoder().decode(e.target.value);
+  let i;
+  while ((i = lineBuf.indexOf("\n")) >= 0) {
+    const line = lineBuf.slice(0, i).trim(); lineBuf = lineBuf.slice(i + 1);
+    if (!line) continue;
+    if (!liveOn || !/^\{"range_mm"|^\{"stat"/.test(line)) out("<< " + line);   // keep live polling out of the transcript
+    if (/^\{"unit":/.test(line) && /"bench":/.test(line)) { const st = json(line); if (st) { self = st; record.fw_tested = record.fw_tested || st.fw; refreshGates(); } }
+    for (const fn of [...listeners]) fn(line);
+  }
+}
+async function openLink(device) {
+  const server = await device.gatt.connect();
+  const svc = await server.getPrimaryService(NUS);
+  tx = await svc.getCharacteristic(NUS_TX);
+  const rx = await svc.getCharacteristic(NUS_RX);
+  rx.addEventListener("characteristicvaluechanged", onRx);
+  await rx.startNotifications();
+}
+async function connect() {
+  if (!navigator.bluetooth) { alert("No Web Bluetooth in this browser. Open the page in Chrome or Edge."); return; }
+  // Match on the name OR the serial service: the name rides in the scan
+  // response, which Chrome on macOS does not always collect, and the picker
+  // then sits on "Scanning…" with the unit advertising ten centimetres away.
+  const d = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "BinBypass-Live-" }, { services: [NUS] }], optionalServices: [NUS, DFU_SVC] });
+  await attach(d);
+}
+async function attach(d) {
+  dev = d; unitId = (dev.name || "").split("-").pop(); lineBuf = "";
+  dev.addEventListener("gattserverdisconnected", onDisconnect);
+  await openLink(dev);
+  out(`[ble] connected to ${dev.name}`);
+  record.unit = unitId;
+  setConn(true);
+  await auth();
+  await identify();
+  if (!testing) startLive();
+}
+function onDisconnect() {
+  out("[ble] disconnected"); tx = null; stopLive(); setConn(false);
+}
+function setConn(on) {
+  $("conn").textContent = on ? `connected · ${unitId}` : (unitId ? `${unitId} · disconnected` : "no unit");
+  $("conn").className = "chip" + (on ? " ok" : "");
+  $("btn-connect").disabled = on; $("btn-disconnect").disabled = !on;
+  for (const id of ["cmd", "btn-send", "btn-record"]) $(id).disabled = !on;
+  refreshGates();
+}
+
+// One command at a time: live polling and tests share the link.
+let chain = Promise.resolve();
+function exclusive(fn) { const p = chain.then(fn, fn); chain = p.catch(() => {}); return p; }
+async function sendRaw(cmd, quiet) {
+  if (!tx) throw new Error("not connected");
+  if (!quiet) out(">> " + cmd);
+  const b = new TextEncoder().encode(cmd + "\n");
+  for (let o = 0; o < b.length; o += 20) await tx.writeValueWithoutResponse(b.slice(o, o + 20));
+}
+// Send cmd, resolve with the first line matching re, or null on timeout.
+function ask(cmd, re, ms = 8000, quiet = false) {
+  return exclusive(() => new Promise((resolve) => {
+    let done = false;
+    const fn = (line) => { if (!done && re.test(line)) finish(line); };
+    const finish = (v) => { done = true; listeners.delete(fn); resolve(v); };
+    listeners.add(fn);
+    setTimeout(() => { if (!done) finish(null); }, ms);
+    sendRaw(cmd, quiet).catch(() => { if (!done) finish(null); });
+  }));
+}
+// Wait for a streamed line (no command sent).
+function waitFor(test, ms) {
+  return new Promise((resolve) => {
+    let done = false;
+    const fn = (line) => { const v = test(line); if (!done && v) { done = true; listeners.delete(fn); resolve(v); } };
+    listeners.add(fn);
+    setTimeout(() => { if (!done) { done = true; listeners.delete(fn); resolve(null); } }, ms);
+  });
+}
+// The unit refuses most verbs while a modem session is open ("ERR busy").
+// Retry every 10 s for up to 5 min, telling the row why it is waiting.
+async function askPatient(cmd, re, ms, row) {
+  const t0 = Date.now();
+  for (;;) {
+    const r = await ask(cmd, new RegExp(re.source + "|^ERR"), ms);
+    if (r !== "ERR busy") return r;
+    if (Date.now() - t0 > 720000) return "ERR busy";
+    const waited = Math.round((Date.now() - t0) / 1000);
+    if (row) setRow(row, "run", `unit is in a modem session, waiting for it to finish… (${waited} s, a boot session can take 7 min)`);
+    else out(`[unit] busy in a modem session, asking again in 10 s (${waited} s so far)`);
+    await sleep(10000);
+  }
+}
+async function auth() {
+  let k = $("authkey").value.trim();
+  if (!k) { try { k = localStorage.getItem("bb-key-" + unitId) || ""; } catch (e) {} }
+  if (!k) { await authSigned(); return; }
+  $("authkey").value = k;
+  const r = await ask("AUTH " + k, /^OK|^ERR/, 3000);
+  if (r === "OK") { try { localStorage.setItem("bb-key-" + unitId, k); } catch (e) {} }
+  out("[auth] " + (r === "OK" ? "accepted" : (r || "no reply")));
+}
+// Firmware 0.3.14+: no label key needed on the bench. CHAL -> the helper signs
+// with the fleet key -> AUTHS. Then the session transcript (TAIL), which the
+// unit no longer streams to anyone who connects (docs/SECURITY.md).
+async function authSigned() {
+  const c = await ask("CHAL", /^CHAL |^ERR/, 4000);
+  const m = /^CHAL ([0-9A-F]{8}) ([0-9A-F]{32})$/.exec(c || "");
+  if (!m) { out("[auth] unit has no signed login (older firmware)"); return; }
+  let sig = null;
+  try {
+    const r = await fetch(HELPER + "/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unit: m[1], nonce: m[2] }) });
+    if (r.ok) sig = (await r.json()).sig;
+  } catch (e) {}
+  if (!sig) { out("[auth] helper not running (node bench/dfu_helper.mjs) - enter the label key to log in"); return; }
+  const r = await ask("AUTHS " + sig, /^OK|^ERR/, 4000);
+  out("[auth] signed login " + (r === "OK" ? "accepted" : (r || "no reply")));
+  if (r === "OK") await ask("TAIL ON", /^OK|^ERR/, 3000, true);
+}
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+async function identify() {
+  const st = json(await askPatient("SELFTEST", /^\{"unit"/, 8000) || "");
+  if (!st) { out("[unit] no SELFTEST reply"); return null; }
+  self = st; record.fw_tested = record.fw_tested || st.fw;
+  $("unitcard").hidden = false;
+  $("u-id").textContent = st.unit; $("u-fw").textContent = st.fw;
+  $("u-build").textContent = st.bench ? "test (bench)" : "deploy";
+  $("u-vbat").textContent = (st.vbat_mv / 1000).toFixed(2) + " V" + (st.charging ? " charging" : "");
+  // Offer the staged test firmware when the unit is on deploy firmware, or on an older test build.
+  const stale = st.bench && staged && staged.test && staged.test.version !== st.fw;
+  $("prodnote-text").textContent = !st.bench
+    ? "This unit is running deploy firmware, which locks the test commands. Install the test firmware first, then test."
+    : `This unit runs test firmware ${st.fw}. Test firmware ${staged && staged.test ? staged.test.version : ""} is staged. Install it before testing.`;
+  $("prodnote").hidden = !!st.bench && !stale;
+  refreshGates();
+  return st;
+}
+
+// ================================================================ tests
+const TESTS = [
+  { id: "identity", name: "Identity",   need: "",                                 req: true },
+  { id: "power",    name: "Power",      need: "battery or PSU 3.0–3.6 V",         req: true },
+  { id: "charger",  name: "Charger",    need: "plug 5 V into USB-C, then re-run", req: false },
+  { id: "bus",      name: "Sensor bus", need: "node strip cabled",                req: true },
+  { id: "sensors",  name: "Sensors",    need: "6 slots on the node strip",        req: true },
+  { id: "modem",    name: "Modem",      need: "SIM fitted",                       req: true },
+  { id: "cellular", name: "Cellular",   need: "SIM + LTE antenna",                req: true },
+  { id: "backend",  name: "Backend",    need: "packet reaches the database",      req: true },
+  { id: "lora",     name: "LoRa",       need: "station listener in range",        req: false },
+  { id: "gps",      name: "GPS",        need: "outside, patch antenna",           req: false },
+];
+const results = {};
+function buildTable() {
+  const tb = $("tests").querySelector("tbody");
+  tb.innerHTML = "";
+  for (const t of TESTS) {
+    const tr = document.createElement("tr"); tr.dataset.t = t.id;
+    tr.innerHTML = `<td class="name">${t.name}${t.req ? "" : ' <span class="need">(optional)</span>'}</td>
+      <td class="st"><span class="badge idle">—</span></td>
+      <td><div class="reading"></div><div class="need">${t.need}</div></td>
+      <td class="act"><button class="link" data-retest="${t.id}" disabled>re-run</button></td>`;
+    tb.appendChild(tr);
+  }
+  tb.addEventListener("click", (e) => { const id = e.target.dataset && e.target.dataset.retest; if (id) runOne(id); });
+}
+function setRow(id, st, reading) {
+  const tr = document.querySelector(`tr[data-t="${id}"]`); if (!tr) return;
+  const b = tr.querySelector(".badge");
+  b.className = "badge " + st;
+  b.textContent = { pass: "PASS", fail: "FAIL", warn: "CHECK", run: "running", idle: "—", skip: "skipped" }[st];
+  if (reading !== undefined) tr.querySelector(".reading").textContent = reading;
+  if (st !== "run" && st !== "idle") record.tests[id] = { result: st, reading: reading || "", at: new Date().toISOString(), fw: self && self.fw };
+  if (st === "idle") delete results[id]; else if (st !== "run") results[id] = st;
+  summarise(); refreshGates();
+}
+function summarise() {
+  const req = TESTS.filter((t) => t.req);
+  const pass = req.filter((t) => results[t.id] === "pass").length;
+  const fails = TESTS.filter((t) => results[t.id] === "fail").map((t) => t.name);
+  $("summary").textContent = Object.keys(results).length
+    ? `${pass} of ${req.length} required checks pass` + (fails.length ? ` · failing: ${fails.join(", ")}` : "") : "";
+}
+const requiredPass = () => TESTS.filter((t) => t.req).every((t) => results[t.id] === "pass");
+
+async function tIdentityPower() {
+  setRow("identity", "run", ""); setRow("power", "run", ""); setRow("charger", "run", "");
+  const st = await identify();
+  if (!st) { setRow("identity", "fail", "no SELFTEST reply"); setRow("power", "idle", ""); setRow("charger", "idle", ""); return; }
+  setRow("identity", "pass", `${st.unit} · fw ${st.fw} · ${st.board}${st.bench ? " · test build" : ""}`);
+  const mv = st.vbat_mv;
+  setRow("power", mv >= 2900 && mv <= 3650 ? "pass" : "fail", `${mv} mV · tier ${st.tier}`);
+  setRow("charger", st.charging ? "pass" : "warn", st.charging ? "charging" : "not charging");
+}
+async function tBus() {
+  setRow("bus", "run", ""); setRow("sensors", "run", "");
+  const raw = await askPatient("I2C", /^\{"i2c"/, 20000, "bus");
+  const j = json(raw || "");
+  if (!j) {
+    const why = raw === "ERR auth" ? "locked: deploy firmware, install test firmware" : (raw || "no reply (needs firmware 0.3.4 or later)");
+    setRow("bus", "fail", why); setRow("sensors", "fail", ""); return;
+  }
+  const b = j.i2c, idle = b.sda_idle && b.scl_idle;
+  setRow("bus", idle && b.ack.length ? "pass" : "fail",
+    `SDA ${b.sda_idle ? "high" : "LOW"} · SCL ${b.scl_idle ? "high" : "LOW"} · answering: ${b.ack.length ? b.ack.join(" ") : "nothing"}` +
+    (!idle ? " · bus held low: check the 12-pin cable and node 2.8 V" : !b.ack.length ? " · nothing answers: node power or cable" : ""));
+  const ok = b.slot_ok.filter(Boolean).length;
+  let reading = `${ok}/6 present · model ${b.model.join(" ")}`;
+  if (ok) {
+    const r = json(await ask("RANGE", /^\{"range_mm"/, 8000) || "");
+    if (r) reading += ` · mm ${r.range_mm.map((v) => v === -1 ? "–" : v === -2 ? "t/o" : v).join(" ")}`;
+  }
+  setRow("sensors", ok === 6 ? "pass" : "fail", reading);
+}
+async function tModem() {
+  setRow("modem", "run", "powering the modem (up to 1 min)");
+  const raw = await askPatient("MODEM", /^\{"modem"/, 120000, "modem");
+  const m = json(raw || "");
+  if (!m) { setRow("modem", "fail", raw === "ERR auth" ? "locked: deploy firmware" : (raw || "no reply in 2 min")); return; }
+  if (!m.modem) { setRow("modem", "fail", `modem not answering: ${m.why}`); return; }
+  const info = Object.entries(m.info || {}).map(([k, v]) => `${k} ${v}`).join(" · ");
+  setRow("modem", m.sim ? "pass" : "fail", (m.sim ? "SIM ready · " : "SIM not ready · ") + info);
+}
+async function backendRow() {
+  const r = await fetch(`${API.base}/unit_live?unit_id=eq.${encodeURIComponent(unitId)}&select=*`, { headers: { apikey: API.key, Authorization: "Bearer " + API.key } });
+  if (!r.ok) throw new Error("backend HTTP " + r.status);
+  return (await r.json())[0] || null;
+}
+async function tCellular() {
+  setRow("cellular", "run", "full session: register, connect, publish (1–3 min)"); setRow("backend", "run", "waiting for the packet");
+  const t0 = Date.now();
+  const q = await askPatient("PUB", /^OK queued/, 8000, "cellular");
+  if (q !== "OK queued") {
+    setRow("cellular", "fail", q === "ERR nocreds" ? "firmware has no broker credentials" : q === "ERR auth" ? "locked: deploy firmware" : (q || "no reply"));
+    setRow("backend", "skip", ""); return;
+  }
+  const ev = await waitFor((l) => { const j = json(l); return j && j.event === "cell" ? j : null; }, 6 * 60000);
+  if (!ev) { setRow("cellular", "fail", "no session result in 6 min"); setRow("backend", "skip", ""); return; }
+  if (!ev.ok) { setRow("cellular", "fail", `${ev.status}: ${ev.why}`); setRow("backend", "skip", ""); return; }
+  setRow("cellular", "pass", `published seq ${ev.seq} · ${ev.rssi} dBm`);
+  // Confirm it landed: broker -> ingest -> database.
+  for (let i = 0; i < 18; i++) {
+    try {
+      const u = await backendRow();
+      if (u && Date.parse(u.last_packet_at) >= t0 - 5000) {
+        setRow("backend", "pass", `received ${new Date(u.last_packet_at).toLocaleTimeString()} · seq ${u.seq} · fw ${u.fw} · ${u.vbat_mv} mV`);
+        return;
+      }
+    } catch (e) { setRow("backend", "run", e.message); }
+    await sleep(5000);
+  }
+  setRow("backend", "fail", "unit published but nothing reached the database in 90 s (ingest addon on the NUC?)");
+}
+async function tLora() {
+  // SELFTEST sends a LoRa packet. The base listener (listener_bridge.py on this
+  // Mac) publishes what it hears to listener-last.json; confirm from that first
+  // and only fall back to the manual buttons when there is no listener feed.
+  const feed = async () => { try { const r = await fetch("listener-last.json?" + Date.now(), { cache: "no-store" }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
+  const t0 = Date.now() / 1000;
+  setRow("lora", "run", "listening on the base for this unit's packet…");
+  const sent = await askPatient("SELFTEST", /^\{"unit"/, 8000, "lora");
+  if (!sent || /^ERR/.test(sent)) { setRow("lora", "fail", sent ? `unit refused SELFTEST (${sent})` : "no SELFTEST reply, nothing sent"); return; }
+  setRow("lora", "run", "packet sent, listening on the base for it…");
+  for (let i = 0; i < 12; i++) {
+    const f = await feed();
+    if (f && f.alive && Date.now() / 1000 - f.alive < 60) {
+      const hit = (f.heard || []).find((h) => h.unit === unitId && h.heard_at >= t0 - 1);
+      if (hit) { setRow("lora", "pass", `heard on the base listener · rssi ${hit.rssi} dBm · snr ${hit.snr} dB`); return; }
+    } else if (i === 0) {
+      out("[lora] no live listener feed (base not on USB or listener_bridge.py not running) - manual confirm");
+      break;
+    }
+    await sleep(1500);
+  }
+  const f2 = await feed();
+  if (f2 && f2.alive && Date.now() / 1000 - f2.alive < 60) { setRow("lora", "fail", "base listener is live but did not hear this unit (antenna on the RAK? range?)"); return; }
+  setRow("lora", "warn", "SELFTEST sent a LoRa packet. No listener feed on this Mac: confirm on the base by hand, then mark it:");
+  const cell = document.querySelector('tr[data-t="lora"] .reading');
+  const b1 = document.createElement("button"); b1.className = "link"; b1.textContent = "heard it";
+  const b2 = document.createElement("button"); b2.className = "link"; b2.textContent = "not heard";
+  b1.onclick = () => setRow("lora", "pass", "packet heard on the station listener");
+  b2.onclick = () => setRow("lora", "fail", "nothing on the station listener");
+  cell.append(" ", b1, b2);
+}
+async function tGps() {
+  setRow("gps", "run", "fix attempt, up to 4 min. Patch antenna on, open sky.");
+  await ask("VERBOSE ON", /^OK/, 3000);
+  const q = await askPatient("LOC", /^OK queued/, 8000, "gps");
+  if (q !== "OK queued") { setRow("gps", "fail", q || "no reply"); return; }
+  const res = await waitFor((l) => {
+    const m = l.match(/\[pub\] binbypass\/\w+\/loc (\{.*\})/); if (m) return json(m[1]);
+    const j = json(l); return j && j.event === "cell" && !j.ok ? { fail: j } : null;
+  }, 8 * 60000);
+  await ask("VERBOSE OFF", /^OK/, 3000);
+  if (!res) setRow("gps", "fail", "no result in 8 min");
+  else if (res.fail) setRow("gps", "fail", `${res.fail.status}: ${res.fail.why}`);
+  // The loc publish line carries lat/lon/acc_m/fix_s on a fix; no "fix" flag.
+  else if (res.lat === undefined || res.lon === undefined) setRow("gps", "fail", `no fix · ${res.sats_inview ?? "?"} in view · ${res.sats_used ?? "?"} used · ${res.secs ?? "?"} s`);
+  else setRow("gps", "pass", `${res.lat}, ${res.lon} ±${res.acc_m} m in ${res.fix_s} s`);
+}
+const RUNNERS = { identity: tIdentityPower, power: tIdentityPower, charger: tIdentityPower, bus: tBus, sensors: tBus,
+                  modem: tModem, cellular: tCellular, backend: tCellular, lora: tLora, gps: tGps };
+async function guarded(fn) {
+  if (testing) return; testing = true; const wasLive = liveOn; stopLive(); refreshGates();
+  try { await fn(); } catch (e) { out("[test] " + e.message); }
+  testing = false; refreshGates(); if (wasLive) startLive();
+}
+const runOne = (id) => guarded(RUNNERS[id]);
+const runAll = () => guarded(async () => {
+  for (const t of TESTS) setRow(t.id, "idle", "");
+  await tIdentityPower();
+  if (!self) return;
+  if (!self.bench) { out("[test] deploy firmware on the unit: install the test firmware first"); return; }
+  await tBus(); await tModem(); await tCellular(); await tLora();
+  if ($("opt-gnss").checked) await tGps(); else setRow("gps", "skip", "not run (tick the GPS option to include it)");
+});
+
+// ================================================================ live view
+function buildSlots() {
+  $("slots").innerHTML = [1, 2, 3, 4, 5, 6].map((n) => `<div class="slot" id="slot${n}"><div class="n">Slot ${n}</div><div class="mm">—</div><div class="s">&nbsp;</div></div>`).join("");
+  $("thr").textContent = THRESHOLD_MM;
+}
+function showRange(arr) {
+  arr.forEach((v, i) => {
+    const el = $("slot" + (i + 1)); if (!el) return;
+    el.className = "slot " + (v < 0 ? "none" : v < THRESHOLD_MM ? "occ" : "free");
+    el.querySelector(".mm").textContent = v === -1 ? "—" : v === -2 ? "t/o" : v;
+    el.querySelector(".s").textContent = v === -1 ? "no sensor" : v === -2 ? "timeout" : v < THRESHOLD_MM ? "OCCUPIED" : "free";
+  });
+}
+let liveTimer = null, liveTick = 0, liveBusySince = 0;
+async function liveStep() {
+  if (!liveOn || !tx) return;
+  liveTick++;
+  const raw = await ask("RANGE", /^\{"range_mm"|^ERR/, 3000, true) || "";
+  const r = json(raw);
+  const busy = /^ERR busy/.test(raw);
+  if (r) { showRange(r.range_mm); liveBusySince = 0; }
+  else if (busy) {
+    // The unit refuses RANGE while a modem session is open. Keep the last
+    // readings on the tiles and say why nothing is moving.
+    if (!liveBusySince) liveBusySince = Date.now();
+    const secs = Math.round((Date.now() - liveBusySince) / 1000);
+    $("live-unit").textContent = `modem session in progress (${secs} s) · slot readings resume when it ends · ` + ($("live-unit").dataset.stat || "");
+  } else if (!raw) {
+    $("live-unit").textContent = "no reply from the unit · " + ($("live-unit").dataset.stat || "");
+  }
+  if (liveTick % 5 === 1) {
+    const s = json(await ask("STAT", /^\{"stat"/, 4000, true) || "");
+    if (s) {
+      const t = s.stat;
+      const statLine = `${(t.vbat_mv / 1000).toFixed(2)} V${t.chg ? " charging" : ""} · tier ${t.tier} · cell ${t.cell}${t.why ? " (" + t.why + ")" : ""} · ${t.rssi} dBm · seq ${t.seq} · clock ${t.clock}` + (t.fix ? ` · fix ${t.fix}` : "");
+      $("live-unit").dataset.stat = statLine;
+      if (!liveBusySince) $("live-unit").textContent = statLine;
+      $("u-vbat").textContent = (t.vbat_mv / 1000).toFixed(2) + " V";
+      $("u-rssi").textContent = t.rssi ? t.rssi + " dBm" : "—";
+    }
+  }
+  if (liveTick % 15 === 1) refreshBackend();
+  if (liveOn) liveTimer = setTimeout(liveStep, 1000);
+}
+async function refreshBackend() {
+  try {
+    const u = await backendRow();
+    $("live-backend").textContent = !u ? "unit not registered in the backend" :
+      `last packet ${new Date(u.last_packet_at).toLocaleString()} (${Math.round(u.age_s / 60)} min ago, ${u.freshness}) · seq ${u.seq} · fw ${u.fw} · ${u.vbat_mv} mV · slots ${u.slots.join(" ")} · ${u.status}${u.site_id ? " @ " + u.site_id : ""}`;
+  } catch (e) { $("live-backend").textContent = e.message; }
+}
+function startLive() { if (liveOn || !tx) return; liveOn = true; liveTick = 0; $("btn-live").textContent = "Stop live view"; liveStep(); }
+function stopLive() { liveOn = false; clearTimeout(liveTimer); $("btn-live").textContent = "Start live view"; }
+async function livePacket() {
+  const t0 = Date.now();
+  $("live-backend").textContent = "unit is publishing (1–3 min)…";
+  const q = await ask("PUB", /^OK queued|^ERR/, 8000);
+  if (q !== "OK queued") { $("live-backend").textContent = "PUB refused: " + (q || "no reply"); return; }
+  const ev = await waitFor((l) => { const j = json(l); return j && j.event === "cell" ? j : null; }, 6 * 60000);
+  if (ev && ev.ok) {
+    for (let i = 0; i < 18; i++) { const u = await backendRow().catch(() => null); if (u && Date.parse(u.last_packet_at) >= t0 - 5000) break; await sleep(5000); }
+  }
+  await refreshBackend();
+  if (ev && !ev.ok) $("live-backend").textContent = `session failed: ${ev.status} ${ev.why}`;
+}
+
+// ================================================================ firmware zips
+function unzip(buf) {
+  // Central-directory zip reader for stored entries (adafruit-nrfutil packages are stored).
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error("not a zip");
+  const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+  const files = {};
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error("bad zip directory");
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const off = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nlen));
+    if (method !== 0) throw new Error(`${name} is compressed (method ${method}); use the zip straight from the build`);
+    const lnl = dv.getUint16(off + 26, true), lxl = dv.getUint16(off + 28, true);
+    files[name] = buf.slice(off + 30 + lnl + lxl, off + 30 + lnl + lxl + csize);
+    p += 46 + nlen + xlen + clen;
+  }
+  return files;
+}
+function parsePackage(bytes, label) {
+  const f = unzip(bytes);
+  const man = json(new TextDecoder().decode(f["manifest.json"] || new Uint8Array())); if (!man) throw new Error("no manifest.json in " + label);
+  const app = man.manifest.application;
+  if (!f[app.bin_file] || !f[app.dat_file]) throw new Error("image files missing from " + label);
+  return { label, bin: f[app.bin_file], dat: f[app.dat_file] };
+}
+async function loadStaged() {
+  try {
+    const r = await fetch("firmware/staged.json", { cache: "no-store" });
+    if (!r.ok) throw new Error();
+    staged = await r.json();
+    $("deploy-info").textContent = `Staged on this Mac: deploy firmware ${staged.deploy ? staged.deploy.version : "none"}, test firmware ${staged.test ? staged.test.version : "none"} (${staged.staged_at || ""}).`;
+    if (staged.deploy) $("btn-deploy").textContent = `Install deploy firmware ${staged.deploy.version}`;
+    if (staged.test) $("testfw-label").textContent = `test firmware ${staged.test.version}`;
+  } catch (e) {
+    staged = null;
+    $("deploy-info").textContent = "No staged firmware. Run bench/stage-firmware.sh on this Mac, then reload.";
+  }
+  refreshGates();
+}
+async function fetchPackage(which) {
+  const s = staged && staged[which]; if (!s) throw new Error(`no staged ${which} firmware`);
+  // Images carry the broker credentials and are no longer served over HTTP
+  // (docs/SECURITY.md); only the helper reads them.
+  throw new Error(`start the helper (node bench/dfu_helper.mjs) to install ${s.file}`);
+}
+
+// ================================================================ OTA (legacy Nordic DFU via the Adafruit bootloader)
+// Web Bluetooth only opens a device picker from a click, so the two reconnects are buttons.
+function dfuStep(html, cls) { const el = $("dfu-step"); el.hidden = false; el.className = "callout" + (cls ? " " + cls : ""); el.innerHTML = html; }
+function clickToContinue(html, label) {
+  return new Promise((resolve) => {
+    dfuStep(`${html}<div class="row" style="margin-top:8px"><button class="primary" id="dfu-next">${label}</button></div>`);
+    $("dfu-next").onclick = () => resolve();
+  });
+}
+async function install(pkg) {
+  stopLive();
+  $("dfuprog").hidden = false; $("dfuprog").value = 0;
+  out(`[dfu] ${pkg.label}: ${pkg.bin.length} bytes`);
+  if (dev && dev.gatt.connected) {
+    dfuStep("Asking the unit to restart into its bootloader…");
+    const svc = await dev.gatt.getPrimaryService(DFU_SVC);
+    const cp = await svc.getCharacteristic(DFU_CP);
+    await cp.startNotifications();                 // the app refuses START without notifications on
+    try { await Promise.race([cp.writeValueWithResponse(new Uint8Array([0x01, 0x04])), sleep(5000)]); } catch (e) {}
+    try { dev.gatt.disconnect(); } catch (e) {}
+    await sleep(2000);
+  }
+  await clickToContinue("The unit is now in its bootloader. Click below and pick <b>AdaDFU</b>.", "Pick the bootloader");
+  const bl = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "AdaDFU" }, { services: [DFU_SVC] }], optionalServices: [DFU_SVC] });
+  dfuStep("Sending firmware. Keep the unit powered and close to the Mac (about 70 s).");
+  const bs = await bl.gatt.connect();
+  const svc = await bs.getPrimaryService(DFU_SVC);
+  const cp = await svc.getCharacteristic(DFU_CP), pkt = await svc.getCharacteristic(DFU_PKT);
+  let pending = null, receipt = null;
+  cp.addEventListener("characteristicvaluechanged", (e) => {
+    const d = new Uint8Array(e.target.value.buffer);
+    if (d[0] === 0x10 && pending && pending.op === d[1]) { const pr = pending; pending = null; d[2] === 1 ? pr.ok() : pr.no(new Error(`bootloader refused op ${d[1]} (status ${d[2]})`)); }
+    else if (d[0] === 0x11 && receipt) { const r = receipt; receipt = null; r(); }
+  });
+  await cp.startNotifications();
+  const expect = (op, ms, what) => new Promise((ok, no) => {
+    const t = setTimeout(() => { pending = null; no(new Error("timeout: " + what)); }, ms);
+    pending = { op, ok: () => { clearTimeout(t); ok(); }, no: (e) => { clearTimeout(t); no(e); } };
+  });
+  const cpw = (b) => cp.writeValueWithResponse(new Uint8Array(b));
+  const pw = (b) => pkt.writeValueWithoutResponse(b);
+  let r = expect(1, 15000, "start"); await cpw([1, 4]);
+  const sizes = new Uint8Array(12); new DataView(sizes.buffer).setUint32(8, pkg.bin.length, true); await pw(sizes); await r;
+  r = expect(2, 60000, "init packet"); await cpw([2, 0]);
+  for (let i = 0; i < pkg.dat.length; i += 20) await pw(pkg.dat.slice(i, i + 20));
+  await cpw([2, 1]); await r;
+  await cpw([8, 10, 0]);
+  r = expect(3, 240000, "image"); await cpw([3]);
+  const t0 = Date.now(); let n = 0;
+  for (let i = 0; i < pkg.bin.length; i += 20) {
+    n++; let wait = null;
+    if (n % 10 === 0) wait = new Promise((res) => { receipt = res; });
+    await pw(pkg.bin.slice(i, i + 20));
+    if (wait && (await Promise.race([wait.then(() => 1), sleep(10000).then(() => 0)])) === 0) throw new Error(`no receipt at byte ${i}`);
+    if (n % 50 === 0) $("dfuprog").value = Math.floor(i * 100 / pkg.bin.length);
+  }
+  await r; $("dfuprog").value = 100;
+  r = expect(4, 30000, "validate"); await cpw([4]); await r;
+  out(`[dfu] image sent in ${((Date.now() - t0) / 1000).toFixed(0)} s, CRC ok`);
+  try { await cpw([5]); } catch (e) {}
+  try { bl.gatt.disconnect(); } catch (e) {}
+  await sleep(4000);
+  await clickToContinue("Firmware installed, unit restarting. Click below and pick <b>BinBypass-Live-" + (unitId || "") + "</b> to verify it.", "Reconnect and verify");
+  // Match on the name OR the serial service: the name rides in the scan
+  // response, which Chrome on macOS does not always collect, and the picker
+  // then sits on "Scanning…" with the unit advertising ten centimetres away.
+  const d = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "BinBypass-Live-" }, { services: [NUS] }], optionalServices: [NUS, DFU_SVC] });
+  await attach(d);
+  if (pkg.version === null) { dfuStep(`Unit now reports ${self ? esc(self.fw) : "nothing"}.`, self ? "ok" : "bad"); return !!self; }
+  const ok = self && self.fw === pkg.version && (!!self.bench === pkg.expectBench);
+  dfuStep(ok ? `Verified: ${esc(self.unit)} runs ${esc(self.fw)} (${self.bench ? "test" : "deploy"} build).`
+             : `Unit reports ${self ? self.fw + (self.bench ? " test build" : " deploy build") : "nothing"}; expected ${pkg.version}. Retry the install.`, ok ? "ok" : "bad");
+  return ok;
+}
+// Firmware goes on through the local helper (bench/dfu_helper.mjs): Chrome's
+// Web Bluetooth blocklist bans the Nordic DFU service, so the page asks the
+// helper to run ble_dfu.js and shows its output. Without the helper running,
+// the old in-page path is tried (it fails on Chrome with the blocklist error).
+const HELPER = "http://127.0.0.1:8795";
+async function helperUp() { try { const r = await fetch(HELPER + "/health", { cache: "no-store" }); return r.ok; } catch (e) { return false; } }
+async function installViaHelper(which) {
+  const f = staged && staged[which] && staged[which].file;
+  if (!f) throw new Error("no " + which + " firmware staged");
+  if (dev && dev.gatt.connected) { out("[dfu] disconnecting so the helper can reach the unit"); stopLive(); dev.gatt.disconnect(); await sleep(1500); }
+  dfuStep(`Installing ${esc(f)} on ${esc(unitId)} through the helper. About two minutes; the unit reboots at the end.`, "run");
+  const r = await fetch(HELPER + "/dfu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unit: unitId, file: f }) });
+  if (!r.ok) throw new Error(await r.text());
+  const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "", all = "";
+  for (;;) { const { value, done } = await rd.read(); if (done) break; buf += dec.decode(value, { stream: true }); let i;
+    while ((i = buf.indexOf("\n")) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l.trim()) { out("[dfu] " + l); all += l + "\n"; } } }
+  const ok = /validate: ok/.test(all) && /activate: sent/.test(all);
+  const st = (all.match(/SELFTEST << (\{.*\})/) || [])[1];
+  if (!ok) throw new Error("the update did not complete (see the transcript)");
+  if (st) { const j = json(st); if (j) self = j; }
+  dfuStep(`<b>Installed.</b> ${esc(f)} is on ${esc(unitId)}${st ? " and it answered on the new firmware" : ""}. Reconnect to keep testing.`, "ok");
+  return true;
+}
+async function doInstall(which) {
+  try {
+    if (await helperUp()) {
+      const ok = await installViaHelper(which);
+      if (ok && which === "deploy") { record.deployed = { fw: staged.deploy.version, at: new Date().toISOString() }; copyRecord(); }
+      return;
+    }
+    out("[dfu] helper not running (node bench/dfu_helper.mjs); trying in the browser");
+    const pkg = await fetchPackage(which);
+    const ok = await install(pkg);
+    if (ok && which === "deploy") {
+      record.deployed = { fw: self.fw, at: new Date().toISOString() };
+      $("conn").textContent = `${unitId} · deploy firmware ${self.fw}`;
+      dfuStep(`<b>Ready to install in the field.</b> ${esc(self.unit)} runs deploy firmware ${esc(self.fw)}. Test record copied to the clipboard.`, "ok");
+      copyRecord();
+    }
+  } catch (e) {
+    out("[dfu] " + e.message);
+    dfuStep(`Install failed: ${esc(e.message)}. If the unit stays in its bootloader, power-cycle it (it goes back to the old firmware) and try again.`, "bad");
+  }
+}
+async function installFile(file) {
+  try { await install({ ...parsePackage(new Uint8Array(await file.arrayBuffer()), file.name), version: null, expectBench: null }); }
+  catch (e) { out("[dfu] " + e.message); dfuStep("Install failed: " + esc(e.message), "bad"); }
+}
+
+// ================================================================ gates and wiring
+function refreshGates() {
+  const on = !!tx, tested = on && !!self && !!self.bench;
+  $("s2").classList.toggle("locked", !on); $("s3").classList.toggle("locked", !on); $("s4").classList.toggle("locked", !on);
+  $("btn-runall").disabled = !on || testing;
+  document.querySelectorAll("[data-retest]").forEach((b) => { b.disabled = !on || testing; });
+  $("btn-live").disabled = !on || testing; $("btn-livepub").disabled = !tested || testing;
+  $("btn-deploy").disabled = !on || testing || !(staged && staged.deploy) || !(requiredPass() || $("opt-override").checked);
+  $("btn-install-test").disabled = !on || !(staged && staged.test);
+}
+async function copyRecord() {
+  const txt = JSON.stringify(record, null, 2);
+  try { await navigator.clipboard.writeText(txt); out("[record] copied to the clipboard"); } catch (e) { out("[record]\n" + txt); }
+}
+$("btn-connect").onclick = () => connect().catch((e) => out("[ble] " + e.message));
+$("btn-disconnect").onclick = () => { if (dev && dev.gatt.connected) dev.gatt.disconnect(); };
+$("btn-runall").onclick = runAll;
+$("btn-live").onclick = () => (liveOn ? stopLive() : startLive());
+$("btn-livepub").onclick = () => guarded(livePacket);
+$("btn-deploy").onclick = () => doInstall("deploy");
+$("btn-install-test").onclick = () => doInstall("test");
+$("opt-override").onchange = refreshGates;
+$("btn-otherfw").onclick = () => $("fw-file").click();
+$("fw-file").onchange = () => { const f = $("fw-file").files[0]; if (f) installFile(f); };
+$("btn-record").onclick = copyRecord;
+$("btn-clear").onclick = () => { logEl.textContent = ""; };
+$("authkey").onchange = () => { if (tx) auth(); };
+$("cmdform").onsubmit = (e) => { e.preventDefault(); const c = $("cmd").value.trim(); if (c) { exclusive(() => sendRaw(c)).catch((er) => out("[ble] " + er.message)); $("cmd").value = ""; } };
+
+buildTable(); buildSlots(); loadStaged(); refreshGates();
+if (!navigator.bluetooth) { out("No Web Bluetooth in this browser. Open this page in Chrome or Edge."); $("logbox").open = true; }
+</script>
+</body>
+</html>
